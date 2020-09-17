@@ -1,7 +1,6 @@
 let
   region = "us-east-2";
   accessKeyId = "dev"; ## aws profile
-  pgrst = import ./pgrst.nix { stdenv = pkgs.stdenv; fetchurl = pkgs.fetchurl; };
 in {
   network.description = "postgrest benchmark";
 
@@ -20,13 +19,16 @@ in {
     };
   };
 
-  main = { config, pkgs, resources, ... }: {
+  main = { config, pkgs, resources, ... }:
+  let pgrst = import ./pgrst.nix { stdenv = pkgs.stdenv; fetchurl = pkgs.fetchurl; }; in
+  {
     deployment = {
       targetEnv = "ec2";
       ec2 = {
         inherit region accessKeyId;
-        instanceType             = "c5.large";
+        instanceType             = "t2.nano";
         associatePublicIpAddress = true;
+        ebsInitialRootDiskSize   = 30;
         keyPair                  = resources.ec2KeyPairs.pgrstKeyPair;
         elasticIPv4              = resources.elasticIPs.pgrstIP;
         securityGroups           = [ resources.ec2SecurityGroups.pgrstGroup ];
@@ -44,39 +46,6 @@ in {
       challengeResponseAuthentication = false;
     };
 
-    # By default it logs to /var/spool/nginx.
-    # For getting a log file from the remote nixos machine use:
-    # nixops scp -d <name> --from main /var/spool/nginx/logs/access.log .
-    services.nginx = {
-      enable = true;
-      config = ''
-        worker_processes 1; # check with nproc
-
-        events {
-          worker_connections 1024; # check with ulimit -n
-        }
-
-        http {
-          include ${pkgs.nginx}/conf/mime.types;
-
-          access_log logs/access.log  main buffer=32k flush=5m;
-
-          server {
-            listen 80 default_server;
-
-            location /api/ {
-              default_type  application/json;
-              proxy_hide_header Content-Location;
-              add_header Content-Location  /api/$upstream_http_content_location;
-              proxy_set_header  Connection "";
-              proxy_http_version 1.1;
-              proxy_pass http://127.0.0.1:3000/;
-            }
-          }
-        }
-      '';
-    };
-
     services.postgresql = {
       enable = true;
       package = pkgs.postgresql_11;
@@ -86,14 +55,13 @@ in {
         host    all all ::1/128 trust
       '';
       # Here goes the sample db
-      #initialscript = pkgs.writetext "initscript" ''
-      #'';
+      initialScript = ./chinook.sql;
     };
 
     systemd.services.postgrest = {
       enable      = true;
       description = "postgrest daemon";
-      after       = [ "postgresql.service" "nginx.service" ];
+      after       = [ "postgresql.service" ];
       wantedBy    = [ "multi-user.target" ];
       serviceConfig.ExecStart = "${pgrst}/bin/postgrest ${./pgrst.conf}";
     };
