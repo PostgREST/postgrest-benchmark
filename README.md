@@ -21,6 +21,7 @@ Now create an ec2 t2.nano instance with nixops.
 ```bash
 nixops create ./deploy.nix -d pgrst-bench
 
+# This assumes there's a `~/.aws/credentials` file(created with aws-cli) with a default profile.
 nixops deploy -d pgrst-bench
 
 # to connect to the ec2 instance
