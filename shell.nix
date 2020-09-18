@@ -7,9 +7,11 @@ let
   pkgs = import nixpkgs {};
 in
 pkgs.mkShell {
-  buildInputs = [ pkgs.nixops ];
-  #Needed by nixops to use the pinned version
+  buildInputs = [
+    pkgs.k6 ## https://k6.io for load testing
+    pkgs.nixops
+  ];
   shellHook = ''
     export NIX_PATH="nixpkgs=${nixpkgs}:."
-  '';
+  ''; # Needed by nixops to use the pinned version
 }

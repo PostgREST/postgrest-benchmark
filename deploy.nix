@@ -1,6 +1,6 @@
 let
   region = "us-east-2";
-  accessKeyId = "dev"; ## aws profile
+  accessKeyId = "default"; ## aws profile
 in {
   network.description = "postgrest benchmark";
 
@@ -63,7 +63,18 @@ in {
       description = "postgrest daemon";
       after       = [ "postgresql.service" ];
       wantedBy    = [ "multi-user.target" ];
-      serviceConfig.ExecStart = "${pgrst}/bin/postgrest ${./pgrst.conf}";
+      serviceConfig.ExecStart =
+      let pgrstConf = pkgs.writeText "pgrst.conf" ''
+        db-uri = "postgres://postgres@localhost/postgres"
+        db-schema = "public"
+        db-anon-role = "postgres"
+
+        server-port = 80
+
+        jwt-secret = "reallyreallyreallyreallyverysafe"
+      '';
+      in
+      "${pgrst}/bin/postgrest ${pgrstConf}";
     };
 
     networking.firewall.allowedTCPPorts = [ 80 443 ];
