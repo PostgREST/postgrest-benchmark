@@ -1,4 +1,4 @@
-# PostgREST benchmark
+# PostgREST benchmark(Work in progress)
 
 The goal of this repo is to provide an updated and reproducible benchmark for PostgREST by using Nix and [k6](https://k6.io/).
 
@@ -49,3 +49,7 @@ k6 run -e URL=<URL> script.js
 + What db template to use?
   - Chinook: https://github.com/lerocha/chinook-database. Pg version: https://github.com/xivSolutions/ChinookDb_Pg_Modified.
   - Also used by Hasura on https://github.com/hasura/graphql-backend-benchmarks
+
+## Notes
+
++ [majkinetor/postgrest-test](https://github.com/majkinetor/postgrest-test): benchmark on Windows.
