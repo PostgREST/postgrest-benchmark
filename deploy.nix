@@ -94,4 +94,30 @@ in {
     };
     boot.loader.grub.device = pkgs.lib.mkForce "/dev/nvme0n1"; # Fix for https://github.com/NixOS/nixpkgs/issues/62824#issuecomment-516369379
   } // conf;
+
+  client = {resources, ...}: {
+    environment.systemPackages = [
+      pkgs.k6
+    ];
+    services.openssh = {
+      passwordAuthentication          = false;
+      challengeResponseAuthentication = false;
+    };
+    deployment = {
+      targetEnv = "ec2";
+      ec2 = {
+        inherit region accessKeyId;
+        instanceType             = "t3a.micro";
+        associatePublicIpAddress = true;
+        keyPair                  = resources.ec2KeyPairs.pgrstBenchKeyPair;
+        securityGroups           = [ resources.ec2SecurityGroups.pgrstBenchSecGroup ];
+      };
+    };
+    boot.loader.grub.device = pkgs.lib.mkForce "/dev/nvme0n1";
+    boot.kernel.sysctl."net.ipv4.tcp_tw_reuse" = 1;
+    security.pam.loginLimits = [ ## ulimit -n
+      { domain = "root"; type = "hard"; item = "nofile"; value = "5000"; }
+      { domain = "root"; type = "soft"; item = "nofile"; value = "5000"; }
+    ];
+  };
 }
