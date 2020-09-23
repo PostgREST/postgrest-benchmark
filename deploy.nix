@@ -95,7 +95,7 @@ in {
     boot.loader.grub.device = pkgs.lib.mkForce "/dev/nvme0n1"; # Fix for https://github.com/NixOS/nixpkgs/issues/62824#issuecomment-516369379
   } // conf;
 
-  client = {resources, ...}: {
+  client = {nodes, resources, ...}: {
     environment.systemPackages = [
       pkgs.k6
     ];
@@ -107,17 +107,21 @@ in {
       targetEnv = "ec2";
       ec2 = {
         inherit region accessKeyId;
-        instanceType             = "t3a.micro";
-        associatePublicIpAddress = true;
+        instanceType             = "t3a.medium";
         keyPair                  = resources.ec2KeyPairs.pgrstBenchKeyPair;
         securityGroups           = [ resources.ec2SecurityGroups.pgrstBenchSecGroup ];
       };
     };
     boot.loader.grub.device = pkgs.lib.mkForce "/dev/nvme0n1";
+    # Tuning configs from https://k6.io/docs/misc/fine-tuning-os
     boot.kernel.sysctl."net.ipv4.tcp_tw_reuse" = 1;
     security.pam.loginLimits = [ ## ulimit -n
       { domain = "root"; type = "hard"; item = "nofile"; value = "5000"; }
       { domain = "root"; type = "soft"; item = "nofile"; value = "5000"; }
     ];
+    networking.hosts ={
+      "${nodes.t2nano.config.networking.privateIPv4}"  = [ "t2nano" ];
+      "${nodes.t3anano.config.networking.privateIPv4}" = [ "t3anano" ];
+    };
   };
 }
