@@ -1,15 +1,18 @@
+// TODO: Somehow giving low RPS. Figure out why.(parsing?)
 import { Rate, Gauge } from "k6/metrics";
 import { check, group, sleep } from 'k6';
 import http from 'k6/http';
 
 const URL = "http://" + __ENV.URL;
 
+const RATE = (__ENV.URL === 't2nano')? 400: 400;
+
 export let options = {
   discardResponseBodies: true,
   scenarios: {
     constant_request_rate: {
       executor: 'constant-arrival-rate',
-      rate: 1200, //setting 1100 leads to dropped iterations
+      rate: RATE,
       timeUnit: '1s',
       duration: '30s',
       preAllocatedVUs: 100,

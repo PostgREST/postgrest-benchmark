@@ -4,12 +4,14 @@ import http from 'k6/http';
 
 const URL = "http://" + __ENV.URL;
 
+const RATE = (__ENV.URL === 't2nano')? 600: 600;
+
 export let options = {
   discardResponseBodies: true,
   scenarios: {
     constant_request_rate: {
       executor: 'constant-arrival-rate',
-      rate: 600, //setting 700 leads to more dropped iterations
+      rate: RATE,
       timeUnit: '1s',
       duration: '30s',
       preAllocatedVUs: 100,
