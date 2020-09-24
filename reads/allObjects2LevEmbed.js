@@ -4,7 +4,7 @@ import http from 'k6/http';
 
 const URL = "http://" + __ENV.HOST;
 
-const RATE = (__ENV.HOST == 't2nano')? 50: 50;
+const RATE = (__ENV.HOST == 't2nano')? 40: 40;
 
 export let options = {
   discardResponseBodies: true,
@@ -13,7 +13,7 @@ export let options = {
       executor: 'constant-arrival-rate',
       rate: RATE,
       timeUnit: '1s',
-      duration: '30s',
+      duration: '1m',
       preAllocatedVUs: 100,
       maxVUs: 600,
     }
