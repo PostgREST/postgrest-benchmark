@@ -59,9 +59,10 @@ in {
       name        = "pgrst-bench-sec-group";
       description = "postgrest benchmark security group";
       rules = [
-        { fromPort = 22;  toPort = 22;  sourceIp = "0.0.0.0/0"; }
-        { fromPort = 80;  toPort = 80;  sourceIp = "0.0.0.0/0"; }
-        { fromPort = 443; toPort = 443; sourceIp = "0.0.0.0/0"; }
+        { fromPort = 22;  toPort = 22;    sourceIp = "0.0.0.0/0"; }
+        { fromPort = 80;  toPort = 80;    sourceIp = "0.0.0.0/0"; }
+        { fromPort = 443; toPort = 443;   sourceIp = "0.0.0.0/0"; }
+        { fromPort = 0;   toPort = 65535; sourceIp = "172.31.0.0/16"; }
       ];
     };
   };
