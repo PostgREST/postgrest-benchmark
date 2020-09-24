@@ -35,10 +35,11 @@ nixops deploy -d pgrst-bench
 And run the k6 script:
 
 ```
-nixops ssh -d pgrst-bench client k6 run -e HOST=t3anano - < reads/singleObject.js
+## k6 will run on the aws instance
+nixops ssh -d pgrst-bench client k6 run -e HOST=t3anano - < k6/GETSingle.js
 
 ## or
-## nixops ssh -d pgrst-bench client k6 run -e HOST=t2nano - < reads/singleObject.js
+## nixops ssh -d pgrst-bench client k6 run -e HOST=t2nano - < k6/GETSingle.js
 ```
 
 ## Ideas on the implementation

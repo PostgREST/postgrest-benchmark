@@ -2,7 +2,7 @@ let
   region = "us-east-2";
   accessKeyId = "default"; ## aws profile
   pkgs = import <nixpkgs> {};
-  conf = let pgrst = import ./pgrst.nix { stdenv = pkgs.stdenv; fetchurl = pkgs.fetchurl; }; in
+  serverConf = let pgrst = import ./pgrst.nix { stdenv = pkgs.stdenv; fetchurl = pkgs.fetchurl; }; in
   {
     environment.systemPackages = [
       pgrst
@@ -41,7 +41,7 @@ let
       };
     };
 
-    networking.firewall.allowedTCPPorts = [ 80 443 ];
+    networking.firewall.allowedTCPPorts = [ 80 ];
   };
 in {
   network.description = "postgrest benchmark";
@@ -72,7 +72,7 @@ in {
         securityGroups           = [ resources.ec2SecurityGroups.pgrstBenchSecGroup ];
       };
     };
-  } // conf;
+  } // serverConf;
 
   t3anano = {resources, ...}: {
     deployment = {
@@ -87,7 +87,7 @@ in {
       };
     };
     boot.loader.grub.device = pkgs.lib.mkForce "/dev/nvme0n1"; # Fix for https://github.com/NixOS/nixpkgs/issues/62824#issuecomment-516369379
-  } // conf;
+  } // serverConf;
 
   client = {nodes, resources, ...}: {
     environment.systemPackages = [
@@ -103,7 +103,7 @@ in {
       };
     };
     boot.loader.grub.device = pkgs.lib.mkForce "/dev/nvme0n1";
-    # Tuning configs from https://k6.io/docs/misc/fine-tuning-os
+    # Tuning from https://k6.io/docs/misc/fine-tuning-os
     boot.kernel.sysctl."net.ipv4.tcp_tw_reuse" = 1;
     security.pam.loginLimits = [ ## ulimit -n
       { domain = "root"; type = "hard"; item = "nofile"; value = "5000"; }
