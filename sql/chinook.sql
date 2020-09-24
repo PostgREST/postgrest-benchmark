@@ -17,7 +17,7 @@
 
    Modified for postgrest-benchmark:
    Summary of Changes:
-     - Removed employee table indexes
+     - Removed employee table indexes and constraints
 ********************************************************************************/
 
 

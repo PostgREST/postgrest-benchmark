@@ -16,7 +16,7 @@ There are recent reports about a drop in performance:
 
 Run `nix-shell`. This will provide an environment where k6 and nixops are available.
 
-Now create an ec2 t2.nano instance with nixops.
+Now create the test environment with nixops.
 
 ```bash
 nixops create ./deploy.nix -d pgrst-bench
@@ -25,16 +25,20 @@ nixops create ./deploy.nix -d pgrst-bench
 nixops deploy -d pgrst-bench
 
 # to connect to the ec2 instance
-# nixops ssh -d pgrst-bench main
+# nixops ssh -d pgrst-bench t2nano
+#
+# you can inspect the db with
+# psql -U postgres
+# \d
 ```
 
 And run the k6 script:
 
 ```
-k6 run -e URL=<URL> script.js
+nixops ssh -d pgrst-bench client k6 run -e HOST=t3anano - < reads/singleObject.js
 
-# get the URL with
-# nixops ssh -d pgrst-bench main curl -s http://169.254.169.254/latest/meta-data/public-hostname
+## or
+## nixops ssh -d pgrst-bench client k6 run -e HOST=t2nano - < reads/singleObject.js
 ```
 
 ## Ideas on the implementation

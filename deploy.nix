@@ -8,21 +8,15 @@ let
       pgrst
     ];
 
-    # Disallow ssh login with password
-    services.openssh = {
-      passwordAuthentication          = false;
-      challengeResponseAuthentication = false;
-    };
-
     services.postgresql = {
       enable = true;
-      package = pkgs.postgresql_11;
+      package = pkgs.postgresql_12;
       authentication = pkgs.lib.mkOverride 10 ''
         local   all all trust
         host    all all 127.0.0.1/32 trust
         host    all all ::1/128 trust
       '';
-      initialScript = ./chinook.sql; # Here goes the sample db
+      initialScript = ./sql/chinook.sql; # Here goes the sample db
     };
 
     systemd.services.postgrest = {
@@ -61,8 +55,7 @@ in {
       rules = [
         { fromPort = 22;  toPort = 22;    sourceIp = "0.0.0.0/0"; }
         { fromPort = 80;  toPort = 80;    sourceIp = "0.0.0.0/0"; }
-        { fromPort = 443; toPort = 443;   sourceIp = "0.0.0.0/0"; }
-        { fromPort = 0;   toPort = 65535; sourceIp = "172.31.0.0/16"; }
+        { fromPort = 0;   toPort = 65535; sourceIp = "172.31.0.0/16"; } ## For internal access on the default VPC. TODO: Create a dedicated VPC.
       ];
     };
   };
@@ -100,10 +93,6 @@ in {
     environment.systemPackages = [
       pkgs.k6
     ];
-    services.openssh = {
-      passwordAuthentication          = false;
-      challengeResponseAuthentication = false;
-    };
     deployment = {
       targetEnv = "ec2";
       ec2 = {

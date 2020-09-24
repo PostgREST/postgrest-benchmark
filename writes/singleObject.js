@@ -2,9 +2,9 @@ import { Rate, Gauge } from "k6/metrics";
 import { check, group, sleep } from 'k6';
 import http from 'k6/http';
 
-const URL = "http://" + __ENV.URL;
+const URL = "http://" + __ENV.HOST;
 
-const RATE = (__ENV.URL === 't2nano')? 1000: 1300;
+const RATE = (__ENV.HOST === 't2nano')? 1000: 1300;
 
 export let options = {
   discardResponseBodies: true,
