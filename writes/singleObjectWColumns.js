@@ -26,7 +26,8 @@ const myFailRate = new Rate('failed requests');
 
 export default function() {
   let body = JSON.stringify({
-    first_name:  'Virtual ' + __ITER
+    employee_id: __ITER + 100
+  , first_name:  'Virtual ' + __ITER
   , last_name:   'User '    + __ITER
   , title:       'Load Tester'
   , reports_to:  1

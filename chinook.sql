@@ -14,6 +14,10 @@
     - Added Transactions table to excercie Biggie code against a bigserial type
     - Imported "Actors", "Cities", "Countries" and "Films" tables from pg dvdrentals Db to excercise
       Biggie code against Full-Text Search table.
+
+   Modified for postgrest-benchmark:
+   Summary of Changes:
+     - Removed employee table indexes
 ********************************************************************************/
 
 
@@ -23853,3 +23857,7 @@ EXECUTE PROCEDURE "last_updated"();
 -- Primary Key structure for table film_actor
 -- ----------------------------
 ALTER TABLE "film_actor" ADD PRIMARY KEY ("actor_id", "film_id");
+
+alter table employee drop constraint pk_employee cascade;
+drop index ifk_employee_reports_to;
+drop sequence employee_employee_id_seq cascade;

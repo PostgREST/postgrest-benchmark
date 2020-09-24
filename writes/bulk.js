@@ -9,7 +9,7 @@ export let options = {
   scenarios: {
     constant_request_rate: {
       executor: 'constant-arrival-rate',
-      rate: 400, //setting 500 leads to dropped iterations
+      rate: 600, //setting 700 leads to more dropped iterations
       timeUnit: '1s',
       duration: '30s',
       preAllocatedVUs: 100,
@@ -26,7 +26,8 @@ const myFailRate = new Rate('failed requests');
 
 export default function() {
   let body = JSON.stringify(Array(20).fill({
-    first_name:  'Virtual ' + __ITER
+    employee_id: __ITER + 100
+  , first_name:  'Virtual ' + __ITER
   , last_name:   'User ' + __ITER
   , title:       'Load Tester'
   , reports_to:  1
