@@ -46,20 +46,59 @@ let
 in {
   network.description = "postgrest benchmark";
 
+  # Provisioning
   resources = {
-    ec2KeyPairs.pgrstBenchKeyPair     = { inherit region accessKeyId; };
-    ec2SecurityGroups.pgrstBenchSecGroup = {
+    ec2KeyPairs.pgrstBenchKeyPair  = { inherit region accessKeyId; };
+    # Dedicated VPC
+    vpc.pgrstBenchVpc = {
       inherit region accessKeyId;
-      name        = "pgrst-bench-sec-group";
-      description = "postgrest benchmark security group";
+      name = "pgrst-bench-vpc";
+      enableDnsSupport = true;
+      enableDnsHostnames = true;
+      cidrBlock = "10.0.0.0/24";
+    };
+    vpcSubnets.pgrstBenchSubnet = {resources, ...}: {
+      inherit region accessKeyId;
+      name = "pgrst-bench-subnet";
+      zone = "${region}a";
+      vpcId = resources.vpc.pgrstBenchVpc;
+      cidrBlock = "10.0.0.0/24";
+      mapPublicIpOnLaunch = true;
+    };
+    vpcInternetGateways.pgrstBenchIG = { resources, ... }: {
+      inherit region accessKeyId;
+      name = "pgrst-bench-ig";
+      vpcId = resources.vpc.pgrstBenchVpc;
+    };
+    vpcRouteTables.pgrstBenchRT = { resources, ... }: {
+      inherit region accessKeyId;
+      name = "pgrst-bench-rt";
+      vpcId = resources.vpc.pgrstBenchVpc;
+    };
+    vpcRoutes.IGRoute = { resources, ... }: {
+      inherit region accessKeyId;
+      routeTableId = resources.vpcRouteTables.pgrstBenchRT;
+      destinationCidrBlock = "0.0.0.0/0";
+      gatewayId = resources.vpcInternetGateways.pgrstBenchIG;
+    };
+    vpcRouteTableAssociations.pgrstBenchAssoc = { resources, ... }: {
+      inherit region accessKeyId;
+      subnetId = resources.vpcSubnets.pgrstBenchSubnet;
+      routeTableId = resources.vpcRouteTables.pgrstBenchRT;
+    };
+    ec2SecurityGroups.pgrstBenchSecGroup = {resources, ...}: {
+      inherit region accessKeyId;
+      name  = "pgrst-bench-sec-group";
+      vpcId = resources.vpc.pgrstBenchVpc;
       rules = [
-        { fromPort = 22;  toPort = 22;    sourceIp = "0.0.0.0/0"; }
         { fromPort = 80;  toPort = 80;    sourceIp = "0.0.0.0/0"; }
-        { fromPort = 0;   toPort = 65535; sourceIp = "172.31.0.0/16"; } ## For internal access on the default VPC. TODO: Create a dedicated VPC.
+        { fromPort = 22;  toPort = 22;    sourceIp = "0.0.0.0/0"; }
+        { fromPort = 0;   toPort = 65535; sourceIp = resources.vpcSubnets.pgrstBenchSubnet.cidrBlock; } # For internal access on the VPC
       ];
     };
   };
 
+  # Configuration
   t2nano = {resources, ...}: {
     deployment = {
       targetEnv = "ec2";
@@ -69,7 +108,8 @@ in {
         associatePublicIpAddress = true;
         ebsInitialRootDiskSize   = 10;
         keyPair                  = resources.ec2KeyPairs.pgrstBenchKeyPair;
-        securityGroups           = [ resources.ec2SecurityGroups.pgrstBenchSecGroup ];
+        subnetId                 = resources.vpcSubnets.pgrstBenchSubnet;
+        securityGroupIds         = [resources.ec2SecurityGroups.pgrstBenchSecGroup.name];
       };
     };
   } // serverConf;
@@ -83,7 +123,8 @@ in {
         associatePublicIpAddress = true;
         ebsInitialRootDiskSize   = 10;
         keyPair                  = resources.ec2KeyPairs.pgrstBenchKeyPair;
-        securityGroups           = [ resources.ec2SecurityGroups.pgrstBenchSecGroup ];
+        subnetId                 = resources.vpcSubnets.pgrstBenchSubnet;
+        securityGroupIds         = [resources.ec2SecurityGroups.pgrstBenchSecGroup.name];
       };
     };
     boot.loader.grub.device = pkgs.lib.mkForce "/dev/nvme0n1"; # Fix for https://github.com/NixOS/nixpkgs/issues/62824#issuecomment-516369379
@@ -98,8 +139,10 @@ in {
       ec2 = {
         inherit region accessKeyId;
         instanceType             = "t3a.medium";
+        associatePublicIpAddress = true;
         keyPair                  = resources.ec2KeyPairs.pgrstBenchKeyPair;
-        securityGroups           = [ resources.ec2SecurityGroups.pgrstBenchSecGroup ];
+        subnetId                 = resources.vpcSubnets.pgrstBenchSubnet;
+        securityGroupIds         = [resources.ec2SecurityGroups.pgrstBenchSecGroup.name];
       };
     };
     boot.loader.grub.device = pkgs.lib.mkForce "/dev/nvme0n1";

@@ -8,7 +8,6 @@ let
 in
 pkgs.mkShell {
   buildInputs = [
-    pkgs.k6 ## https://k6.io for load testing
     pkgs.nixops
   ];
   shellHook = ''
