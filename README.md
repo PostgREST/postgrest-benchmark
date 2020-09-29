@@ -1,60 +1,54 @@
 # PostgREST benchmark(Work in progress)
 
-The goal of this repo is to provide an updated and reproducible benchmark for PostgREST by using Nix and [k6](https://k6.io/).
+Updated and reproducible benchmark for PostgREST by using [Nix](https://nixos.org/) and [k6](https://k6.io/).
 
-## Motivation
+## Setup
 
-The [performance section of PostgREST](https://github.com/PostgREST/postgrest#performance) is outdated.
+The tests are ran on AWS EC2 instances on a dedicated VPC. The client(k6) and the servers(pg+pgrest) are on different instances. This whole setup will be handled by Nix.
 
-There are recent reports about a drop in performance:
+Run `nix-shell`. This will provide an environment where all the dependencies are available.
 
-- [Only 1200 req/s instead of the old 2000 req/s](https://gitter.im/begriffs/postgrest?at=5ef91afa54d7862dc4b4ae2d)
-- [10-15% drop in perf with pre-request](https://gitter.im/begriffs/postgrest?at=5f075bb9a9378637e8ba5f9b)
-- [Slow insertions](https://gitter.im/begriffs/postgrest?at=5f0c2f38f6b7416284300cb0)(might be solved by specifying columns)
+```
+nix-shell
+>
+```
 
-## Running
+Now create the environment with nixops.
 
-Run `nix-shell`. This will provide an environment where k6 and nixops are available.
-
-Now create the test environment with nixops.
-
-```bash
+```
+# This assumes there's a `~/.aws/credentials` file(created with aws-cli) with a default profile.
 nixops create ./deploy.nix -d pgrst-bench
 
-# This assumes there's a `~/.aws/credentials` file(created with aws-cli) with a default profile.
-nixops deploy -d pgrst-bench
-
-# to connect to the ec2 instance
+# To explore and connect to the ec2 instances
 # nixops ssh -d pgrst-bench t2nano
+# nixops ssh -d pgrst-bench t3anano
+# nixops ssh -d pgrst-bench client
 #
 # you can inspect the db with
 # psql -U postgres
 # \d
 ```
 
-And run the k6 script:
+## Usage
+
+Run the k6 script:
 
 ```
 ## k6 will run on the aws instance
 nixops ssh -d pgrst-bench client k6 run -e HOST=t3anano - < k6/GETSingle.js
-
-## or
-## nixops ssh -d pgrst-bench client k6 run -e HOST=t2nano - < k6/GETSingle.js
 ```
 
-## Ideas on the implementation
-
-+ Scenarios to test:
-  - read heavy workload(with resource embedding)
-  - write heavy workload(with and without [specifying-columns](http://postgrest.org/en/v7.0.0/api.html#specifying-columns))
-  - pg + pgrest on the same machine(unix socket and tcp).
-  - pg and pgrest on different machines?
-  - pgrest with `pre-request`?
-
-+ What db template to use?
-  - Chinook: https://github.com/lerocha/chinook-database. Pg version: https://github.com/xivSolutions/ChinookDb_Pg_Modified.
-  - Also used by Hasura on https://github.com/hasura/graphql-backend-benchmarks
+(Steps for collecting the results are pending)
 
 ## Notes
 
-+ [majkinetor/postgrest-test](https://github.com/majkinetor/postgrest-test): benchmark on Windows.
+- Scenarios to test:
+  - [x]read heavy workload(with resource embedding)
+  - [x]write heavy workload(with and without [specifying-columns](http://postgrest.org/en/v7.0.0/api.html#specifying-columns))
+  - [ ]pg + pgrest on the same machine(unix socket and tcp).
+  - [ ]pg and pgrest on different machines?
+  - [ ]pgrest with `pre-request`?
+
+## Other benchmarks
+
++ [majkinetor/postgrest-test](https://github.com/majkinetor/postgrest-test): PostgREST benchmark on Windows.
