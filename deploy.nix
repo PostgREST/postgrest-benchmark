@@ -98,7 +98,6 @@ in {
     };
   };
 
-  # Configuration
   t2nano = {resources, ...}: {
     deployment = {
       targetEnv = "ec2";
@@ -130,6 +129,100 @@ in {
     boot.loader.grub.device = pkgs.lib.mkForce "/dev/nvme0n1"; # Fix for https://github.com/NixOS/nixpkgs/issues/62824#issuecomment-516369379
   } // serverConf;
 
+  t3amicro = {resources, ...}: {
+    deployment = {
+      targetEnv = "ec2";
+      ec2 = {
+        inherit region accessKeyId;
+        instanceType             = "t3a.micro";
+        associatePublicIpAddress = true;
+        ebsInitialRootDiskSize   = 10;
+        keyPair                  = resources.ec2KeyPairs.pgrstBenchKeyPair;
+        subnetId                 = resources.vpcSubnets.pgrstBenchSubnet;
+        securityGroupIds         = [resources.ec2SecurityGroups.pgrstBenchSecGroup.name];
+      };
+    };
+    boot.loader.grub.device = pkgs.lib.mkForce "/dev/nvme0n1"; # Fix for https://github.com/NixOS/nixpkgs/issues/62824#issuecomment-516369379
+  } // serverConf;
+
+  t3amedium = {resources, ...}: {
+    deployment = {
+      targetEnv = "ec2";
+      ec2 = {
+        inherit region accessKeyId;
+        instanceType             = "t3a.medium";
+        associatePublicIpAddress = true;
+        ebsInitialRootDiskSize   = 10;
+        keyPair                  = resources.ec2KeyPairs.pgrstBenchKeyPair;
+        subnetId                 = resources.vpcSubnets.pgrstBenchSubnet;
+        securityGroupIds         = [resources.ec2SecurityGroups.pgrstBenchSecGroup.name];
+      };
+    };
+    boot.loader.grub.device = pkgs.lib.mkForce "/dev/nvme0n1"; # Fix for https://github.com/NixOS/nixpkgs/issues/62824#issuecomment-516369379
+  } // serverConf;
+
+  t3alarge = {resources, ...}: {
+    deployment = {
+      targetEnv = "ec2";
+      ec2 = {
+        inherit region accessKeyId;
+        instanceType             = "t3a.large";
+        associatePublicIpAddress = true;
+        ebsInitialRootDiskSize   = 10;
+        keyPair                  = resources.ec2KeyPairs.pgrstBenchKeyPair;
+        subnetId                 = resources.vpcSubnets.pgrstBenchSubnet;
+        securityGroupIds         = [resources.ec2SecurityGroups.pgrstBenchSecGroup.name];
+      };
+    };
+    boot.loader.grub.device = pkgs.lib.mkForce "/dev/nvme0n1";
+  } // serverConf;
+
+  t3axlarge = {resources, ...}: {
+    deployment = {
+      targetEnv = "ec2";
+      ec2 = {
+        inherit region accessKeyId;
+        instanceType             = "t3a.xlarge";
+        associatePublicIpAddress = true;
+        ebsInitialRootDiskSize   = 10;
+        keyPair                  = resources.ec2KeyPairs.pgrstBenchKeyPair;
+        subnetId                 = resources.vpcSubnets.pgrstBenchSubnet;
+        securityGroupIds         = [resources.ec2SecurityGroups.pgrstBenchSecGroup.name];
+      };
+    };
+    boot.loader.grub.device = pkgs.lib.mkForce "/dev/nvme0n1";
+  } // serverConf;
+
+  c4xlarge = {resources, ...}: {
+    deployment = {
+      targetEnv = "ec2";
+      ec2 = {
+        inherit region accessKeyId;
+        instanceType             = "c4.xlarge";
+        associatePublicIpAddress = true;
+        ebsInitialRootDiskSize   = 10;
+        keyPair                  = resources.ec2KeyPairs.pgrstBenchKeyPair;
+        subnetId                 = resources.vpcSubnets.pgrstBenchSubnet;
+        securityGroupIds         = [resources.ec2SecurityGroups.pgrstBenchSecGroup.name];
+      };
+    };
+  } // serverConf;
+
+  c5xlarge = {resources, ...}: {
+    deployment = {
+      targetEnv = "ec2";
+      ec2 = {
+        inherit region accessKeyId;
+        instanceType             = "c5.xlarge";
+        associatePublicIpAddress = true;
+        ebsInitialRootDiskSize   = 10;
+        keyPair                  = resources.ec2KeyPairs.pgrstBenchKeyPair;
+        subnetId                 = resources.vpcSubnets.pgrstBenchSubnet;
+        securityGroupIds         = [resources.ec2SecurityGroups.pgrstBenchSecGroup.name];
+      };
+    };
+  } // serverConf;
+
   client = {nodes, resources, ...}: {
     environment.systemPackages = [
       pkgs.k6
@@ -152,9 +245,14 @@ in {
       { domain = "root"; type = "hard"; item = "nofile"; value = "5000"; }
       { domain = "root"; type = "soft"; item = "nofile"; value = "5000"; }
     ];
-    networking.hosts ={
-      "${nodes.t2nano.config.networking.privateIPv4}"  = [ "t2nano" ];
-      "${nodes.t3anano.config.networking.privateIPv4}" = [ "t3anano" ];
+    networking.hosts = {
+      "${nodes.t2nano.config.networking.privateIPv4}"    = [ "t2nano" ];
+      "${nodes.t3anano.config.networking.privateIPv4}"   = [ "t3anano" ];
+      "${nodes.t3amicro.config.networking.privateIPv4}"  = [ "t3amicro" ];
+      "${nodes.t3alarge.config.networking.privateIPv4}"  = [ "t3alarge" ];
+      "${nodes.t3axlarge.config.networking.privateIPv4}" = [ "t3axlarge" ];
+      "${nodes.c4xlarge.config.networking.privateIPv4}"  = [ "c4xlarge" ];
+      "${nodes.c5xlarge.config.networking.privateIPv4}"  = [ "c5xlarge" ];
     };
   };
 }

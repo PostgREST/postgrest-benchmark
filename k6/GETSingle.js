@@ -4,7 +4,32 @@ import http from 'k6/http';
 
 const URL = "http://" + __ENV.HOST;
 
-const RATE = (__ENV.HOST == 't2nano')? 1100: 1400;
+const RATE = (function(){
+  if(__ENV.VERSION == 'master'){
+    switch(__ENV.HOST){
+      case 'c5xlarge': return 2400;
+      case 'c4xlarge': return 2000;
+      case 't3axlarge':  return 1400;
+      case 't3alarge':  return 1400;
+      case 't3amedium':  return 1400;
+      case 't3amicro':  return 1400;
+      case 't3anano':  return 1400;
+      case 't2nano':   return 1100;
+      default:         return 1000;
+    }
+  }
+  else switch(__ENV.HOST){
+      case 'c5xlarge': return 3000;
+      case 'c4xlarge': return 2500;
+      case 't3axlarge':  return 2100;
+      case 't3alarge':  return 2100;
+      case 't3amedium':  return 2100;
+      case 't3amicro':  return 2100;
+      case 't3anano':  return 2100;
+      case 't2nano':   return 1600;
+      default:         return 1000;
+    }
+})();
 
 export let options = {
   discardResponseBodies: true,
@@ -13,7 +38,7 @@ export let options = {
       executor: 'constant-arrival-rate',
       rate: RATE,
       timeUnit: '1s',
-      duration: '1m',
+      duration: '30s',
       preAllocatedVUs: 100,
       maxVUs: 600,
     }
