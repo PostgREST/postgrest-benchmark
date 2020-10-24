@@ -9,7 +9,7 @@ const RATE = (function(){
     switch(__ENV.HOST){
       case 'c5xlarge': return 2400;
       case 'c4xlarge': return 2000;
-      case 't3axlarge':  return 1400;
+      case 't3axlarge':  return 1600;
       case 't3alarge':  return 1400;
       case 't3amedium':  return 1400;
       case 't3amicro':  return 1400;
@@ -21,7 +21,7 @@ const RATE = (function(){
   else switch(__ENV.HOST){
       case 'c5xlarge': return 3000;
       case 'c4xlarge': return 2500;
-      case 't3axlarge':  return 2100;
+      case 't3axlarge':  return 2300;
       case 't3alarge':  return 2100;
       case 't3amedium':  return 2100;
       case 't3amicro':  return 2100;
