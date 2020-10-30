@@ -23865,12 +23865,12 @@ drop sequence employee_employee_id_seq cascade;
 
 create or replace function ret_albums() returns setof album as $$
   select * from album
-$$ language sql;
+$$ language sql stable;
 
 create or replace function ret_artists() returns setof artist as $$
   select * from artist
-$$ language sql;
+$$ language sql stable;
 
 create or replace function add_them(a int, b int, c int, d int, e int) returns int as $$
   select a + b + c + d + e;
-$$ language sql;
+$$ language sql immutable;
