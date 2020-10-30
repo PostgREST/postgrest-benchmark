@@ -5,29 +5,29 @@ import http from 'k6/http';
 const URL = "http://" + __ENV.HOST;
 
 const RATE = (function(){
-  if(__ENV.VERSION == 'master'){
+  if(__ENV.VERSION == 'v701'){
     switch(__ENV.HOST){
-      case 'c5xlarge': return 70;
-      case 'c4xlarge': return 60;
-      case 't3axlarge':  return 55;
+      case 'c5xlarge':  return 70;
+      case 'c4xlarge':  return 60;
+      case 't3axlarge': return 55;
       case 't3alarge':  return 40;
-      case 't3amedium':  return 40;
+      case 't3amedium': return 40;
       case 't3amicro':  return 40;
-      case 't3anano':  return 40;
-      case 't2nano':   return 40;
-      default:         return 40;
+      case 't3anano':   return 40;
+      case 't2nano':    return 40;
+      default:          return 40;
     }
   }
   else switch(__ENV.HOST){
-      case 'c5xlarge': return 70;
-      case 'c4xlarge': return 60;
-      case 't3axlarge':  return 65;
+      case 'c5xlarge':  return 70;
+      case 'c4xlarge':  return 60;
+      case 't3axlarge': return 65;
       case 't3alarge':  return 40;
-      case 't3amedium':  return 40;
+      case 't3amedium': return 40;
       case 't3amicro':  return 40;
-      case 't3anano':  return 40;
-      case 't2nano':   return 40;
-      default:         return 40;
+      case 't3anano':   return 40;
+      case 't2nano':    return 40;
+      default:          return 40;
     }
 })();
 

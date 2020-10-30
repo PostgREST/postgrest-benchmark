@@ -7,17 +7,17 @@ const URL = "http://" + __ENV.HOST;
 const RATE = (function(){
   if(__ENV.VERSION == 'v701'){
     switch(__ENV.HOST){
-      case 'c5xlarge': return 2400;
-      case 't3axlarge':  return 1600;
-      case 't3anano':  return 1600;
-      default:         return 1500;
+      case 'c5xlarge':  return 2400;
+      case 't3axlarge': return 1600;
+      case 't3anano':   return 1600;
+      default:          return 1500;
     }
   }
   else switch(__ENV.HOST){
-      case 'c5xlarge': return 3000;
-      case 't3axlarge':  return 2200;
-      case 't3anano':  return 2000;
-      default:         return 1000;
+      case 'c5xlarge':  return 3000;
+      case 't3axlarge': return 2200;
+      case 't3anano':   return 2100;
+      default:          return 1000;
     }
 })();
 
@@ -42,8 +42,6 @@ export let options = {
 const myFailRate = new Rate('failed requests');
 
 export default function() {
-  //let res = http.get(URL + "/rpc/add_them1?a=1&b=2&c=3&d=4&e=5");
-  let res = http.get(URL + "/rpc/add_them2?a=1&b=2&c=3&d=4&e=5&v=0");
-  //let res = http.get(URL + "/rpc/add_them3?v=1&v=2&v=3&v=4&v=5");
+  let res = http.get(URL + "/rpc/add_them?a=1&b=2&c=3&d=4&e=5");
   myFailRate.add(res.status !== 200);
 }

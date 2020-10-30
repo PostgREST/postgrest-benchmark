@@ -7,17 +7,17 @@ const URL = "http://" + __ENV.HOST;
 const RATE = (function(){
   if(__ENV.VERSION == 'v701'){
     switch(__ENV.HOST){
-      case 'c5xlarge': return 2400;
-      case 't3axlarge':  return 1600;
-      case 't3anano':  return 1500;
-      default:         return 1000;
+      case 'c5xlarge':  return 2400;
+      case 't3axlarge': return 1600;
+      case 't3anano':   return 1500;
+      default:          return 1000;
     }
   }
   else switch(__ENV.HOST){
-      case 'c5xlarge': return 3000;
-      case 't3axlarge':  return 2300;
-      case 't3anano':  return 2100;
-      default:         return 1000;
+      case 'c5xlarge':  return 3000;
+      case 't3axlarge': return 2300;
+      case 't3anano':   return 2200;
+      default:          return 1000;
     }
 })();
 
