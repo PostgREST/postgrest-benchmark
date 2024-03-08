@@ -1,2 +1,4 @@
 .env
 old
+.deployment.nixops*
+.history
