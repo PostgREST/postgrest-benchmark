@@ -1,8 +1,8 @@
 let
   nixpkgs = builtins.fetchTarball {
-    name = "nixos-20.03";
-    url = "https://github.com/nixos/nixpkgs/archive/7bc3a08d3a4c700b53a3b27f5acd149f24b931ec.tar.gz";
-    sha256 = "1kiz37052zsgvw7a378zg08mpbi1wk8dkgm5j6dy0x4mxvcg8ws3";
+    name = "nixpkgs-08-03-2024";
+    url = "https://github.com/nixos/nixpkgs/archive/97b6cd2b244cae972b24de3321a298ef67e9319d.tar.gz";
+    sha256 = "032nk4035bic84g653agi0iybkdblfyads80waqivxrx10y4nx39";
   };
   pkgs = import nixpkgs {};
   global = import ./global.nix;
@@ -18,7 +18,7 @@ let
         if test $info -eq 1
         then
           echo "Creating deployment..."
-          nixops create deploy.nix -d ${prefix}
+          nixops create -d ${prefix}
         fi
 
         nixops deploy -k -d ${prefix} --allow-reboot --confirm
@@ -130,7 +130,7 @@ let
 in
 pkgs.mkShell {
   buildInputs = [
-    pkgs.nixops
+    (pkgs.nixops_unstable_minimal.withPlugins (ps: [ ps.nixops-aws ]))
     deploy
     info
     k6

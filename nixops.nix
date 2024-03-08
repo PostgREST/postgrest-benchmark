@@ -27,6 +27,10 @@ let
       };
   };
 in {
+  network.storage.legacy = {
+    databasefile = "~/.deployments.nixops";
+  };
+
   network.description = "postgrest benchmark";
 
   # Provisioning
