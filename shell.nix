@@ -1,8 +1,8 @@
 let
   nixpkgs = builtins.fetchTarball {
-    name = "nixpkgs-08-03-2024";
-    url = "https://github.com/nixos/nixpkgs/archive/97b6cd2b244cae972b24de3321a298ef67e9319d.tar.gz";
-    sha256 = "032nk4035bic84g653agi0iybkdblfyads80waqivxrx10y4nx39";
+    name = "nixpkgs-06-03-2024";
+    url = "https://github.com/nixos/nixpkgs/archive/f32e786e98f0dc9cbf46a47f8cf79a9c57f6b777.tar.gz";
+    sha256 = "0d9k60525qdqyzzr4abaa0w218vdrp6p85qzcfv4dflc5rp186jj";
   };
   pkgs = import nixpkgs {};
   global = import ./global.nix;
