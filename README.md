@@ -33,7 +33,7 @@ $ nix-shell
 Deploy with:
 
 ```
-$ pgrstbench-deploy
+$ postgrest-bench-deploy
 
 pgrstBenchVpc.....> creating vpc under region us-east-2
 ..
@@ -47,13 +47,13 @@ pgrstbench> deployment finished successfully
 Run a `k6` test on the client instance and get the output:
 
 ```
-$ pgrstbench-k6 20 k6/GETSingle.js
+$ postgrest-bench-k6 20 k6/GETSingle.js
 ```
 
 Destroy all the setup and the AWS instances:
 
 ```
-$ pgrstbench-destroy
+$ postgrest-bench-destroy
 ```
 
 ## SSH
@@ -61,7 +61,7 @@ $ pgrstbench-destroy
 To connect to the PostgreSQL instance:
 
 ```
-$ pgrstbench-ssh pg
+$ postgrest-bench-ssh pg
 
 # Check the installed services
 $ systemctl list-units
@@ -76,7 +76,7 @@ The postgresql server comes loaded with the [chinook database](https://github.co
 To connect to the PostgREST instance:
 
 ```
-$ pgrstbench-ssh pgrst
+$ postgrest-bench-ssh pgrst
 
 # Check the installed services
 $ systemctl list-units
@@ -88,7 +88,7 @@ $ curl localhost:80/artist
 You can also get info (like the IPs) of the instances with:
 
 ```
-$ pgrstbench-info
+$ postgrest-bench-info
 ```
 
 ## K6
@@ -109,7 +109,7 @@ There are different scripts on `k6/` which test different PostgREST requests.
 pgbench also runs on the client instance, you can get its output with:
 
 ```
-$ pgrstbench-pgbench pgbench/GETSingle.sql
+$ postgrest-bench-pgbench pgbench/GETSingle.sql
 ```
 
 The `GETSingle.sql` runs an equivalent SQL statement to what PostgREST generates for `GETSingle.js`. The motivation for this comparison is to see how much PostgREST performance differs from direct SQL connections.
@@ -121,25 +121,25 @@ There are scripts that help with varying the environment while load testing. You
 Run pgbench with a different qty of clients:
 
 ```
-$ pgrstbench-pgbench-vary-clients pgbench/GETSingle.sql
+$ postgrest-bench-pgbench-vary-clients pgbench/GETSingle.sql
 ```
 
 Run k6 with a different qty of VUs:
 
 ```
-$ pgrstbench-k6-vary-vus k6/GETSingle.js
+$ postgrest-bench-k6-vary-vus k6/GETSingle.js
 ```
 
 Run pgbench with varied clients and with varied pg instances (this will involve reprovisioning/redeploying the pg instance, it will take a while):
 
 ```
-$ pgrstbench-vary-pg pgrstbench-pgbench-vary-clients pgbench/GETSingle.sql > PGBENCH_GET_SINGLE.txt
+$ postgrest-bench-vary-pg postgrest-bench-pgbench-vary-clients pgbench/GETSingle.sql > PGBENCH_GET_SINGLE.txt
 ```
 
 Run k6 with varied vus and with varied pg instances and pgrst instances (this will involve reprovisioning/redeploying the pg and pgrst instance, it will take even longer):
 
 ```
-$ pgrstbench-vary-pg-pgrst pgrstbench-k6-vary-vus k6/GETSingle.js > K6_GET_SINGLE.txt
+$ postgrest-bench-vary-pg-pgrst postgrest-bench-k6-vary-vus k6/GETSingle.js > K6_GET_SINGLE.txt
 ```
 
 ## Different Setups
@@ -150,14 +150,14 @@ To load test with nginx included do:
 
 ```bash
 export PGRBENCH_WITH_NGINX="true"
-pgrbench-deploy
+postgrest-bench-deploy
 ```
 
 To only have PostgREST listening directly on port 80:
 
 ```bash
 export PGRBENCH_WITH_NGINX="false"
-pgrbench-deploy
+postgrest-bench-deploy
 ```
 
 ### Unix socket (default)
@@ -166,14 +166,14 @@ To load test connecting pgrest to pg with unix socket, and pgrest to nginx with 
 
 ```bash
 export PGRBENCH_WITH_UNIX_SOCKET="true"
-pgrbench-deploy
+postgrest-bench-deploy
 ```
 
 To use tcp instead, you can do:
 
 ```bash
 export PGRBENCH_WITH_UNIX_SOCKET="false"
-pgrbench-deploy
+postgrest-bench-deploy
 ```
 
 ### Separate PostgreSQL instance (default)
@@ -182,14 +182,14 @@ To load test with a pg on a different ec2 instance.
 
 ```bash
 export PGRBENCH_SEPARATE_PG="true"
-pgrbench-deploy
+postgrest-bench-deploy
 ```
 
 To use the same instance for both PostgreSQL and PostgREST.
 
 ```bash
 export PGRBENCH_SEPARATE_PG="false"
-pgrbench-deploy
+postgrest-bench-deploy
 ```
 
 ### Two PostgREST instances over load balanced with Nginx
@@ -198,7 +198,7 @@ Some experiments indicate that when load testing on big instances (like `m5a.8xl
 
 ```bash
 export PGRSTBENCH_PGRST_NGNIX_LBS="true"
-pgrbench-deploy
+postgrest-bench-deploy
 ```
 
 ### Different EC2 instance types
@@ -210,7 +210,7 @@ export PGRBENCH_PG_INSTANCE_TYPE="t3a.xlarge"
 export PGRBENCH_PGRST_INSTANCE_TYPE="t3a.xlarge"
 export PGRBENCH_PGRST_INSTANCE_TYPE="t3a.xlarge"
 
-pgrbench-deploy
+postgrest-bench-deploy
 ```
 
 ## Limitations
