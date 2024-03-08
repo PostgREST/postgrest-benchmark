@@ -2,10 +2,10 @@
 
 stdenv.mkDerivation rec {
   name = "postgrest";
-  version = "v11.2.1";
+  version = "v12.0.2";
   src = fetchurl {
       url = "https://github.com/PostgREST/postgrest/releases/download/${version}/postgrest-${version}-linux-static-x64.tar.xz";
-      sha256 = "sha256-nsc1AbCj4nn8uttZmbZQqJl5SvxP/xJQhcQo38T/3Hw=";
+      sha256 = "sha256-IOlVr5C0cvHaFF4T4uaUK4AYr9CzUv2/VZ/Mz4BwXcY=";
     };
   phases = ["installPhase" "patchPhase"];
   installPhase = ''

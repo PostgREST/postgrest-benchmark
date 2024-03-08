@@ -1,3 +1,3 @@
 {
-  prefix = "pgrstbench";
+  prefix = "postgrest-bench";
 }
