@@ -1,8 +1,8 @@
 let
   nixpkgs = builtins.fetchTarball {
-    name = "nixpkgs-06-03-2024";
-    url = "https://github.com/nixos/nixpkgs/archive/f32e786e98f0dc9cbf46a47f8cf79a9c57f6b777.tar.gz";
-    sha256 = "0d9k60525qdqyzzr4abaa0w218vdrp6p85qzcfv4dflc5rp186jj";
+    name = "24.05";
+    url = "https://github.com/NixOS/nixpkgs/archive/refs/tags/24.05.tar.gz";
+    sha256 = "sha256:1lr1h35prqkd1mkmzriwlpvxcb34kmhc9dnr48gkm8hh089hifmx";
   };
   pkgs = import nixpkgs {};
   global = import ./global.nix;
@@ -125,7 +125,7 @@ let
 
         nixops delete -d ${prefix}
 
-        rm .deployment.nixops
+        rm -rf .deployment.nixops*
       '';
 in
 pkgs.mkShell {
@@ -144,7 +144,6 @@ pkgs.mkShell {
   ];
   shellHook = ''
     export NIX_PATH="nixpkgs=${nixpkgs}:."
-    export NIXOPS_STATE=".deployment.nixops"
     export HISTFILE=.history
 
     export PGRSTBENCH_AWS_PROFILE="default"
@@ -156,8 +155,7 @@ pkgs.mkShell {
     export PGRSTBENCH_CLIENT_INSTANCE_TYPE="m5a.xlarge"
     export PGRSTBENCH_PG_INSTANCE_TYPE="t3a.nano"
     export PGRSTBENCH_PGRST_INSTANCE_TYPE="t3a.nano"
-    export PGRSTBENCH_PGRST_POOL="200"
-    export PGRSTBENCH_PGRST_NGNIX_LBS="false"
+    export PGRSTBENCH_PGRST_POOL="20"
     export PGRSTBENCH_PG_LOGGING="false"
   '';
 }

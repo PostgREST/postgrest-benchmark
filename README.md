@@ -97,7 +97,7 @@ K6 runs on the client instance, but you can get the output of the load test on y
 
 ```
 ## k6 will run with 10 VUs on the AWS client instance and load test the t3anano instance with the local k6/GETSingle.js script
-$ pgrbench-k6 10 k6/GETSingle.js
+$ postgrest-bench-k6 20 k6/GETSingle.js
 
 ## You will see the k6 logo and runs here
 ```
@@ -109,7 +109,7 @@ There are different scripts on `k6/` which test different PostgREST requests.
 pgbench also runs on the client instance, you can get its output with:
 
 ```
-$ postgrest-bench-pgbench pgbench/GETSingle.sql
+$ postgrest-bench-pgbench 20 pgbench/GETSingle.sql
 ```
 
 The `GETSingle.sql` runs an equivalent SQL statement to what PostgREST generates for `GETSingle.js`. The motivation for this comparison is to see how much PostgREST performance differs from direct SQL connections.
@@ -189,15 +189,6 @@ To use the same instance for both PostgreSQL and PostgREST.
 
 ```bash
 export PGRBENCH_SEPARATE_PG="false"
-postgrest-bench-deploy
-```
-
-### Two PostgREST instances over load balanced with Nginx
-
-Some experiments indicate that when load testing on big instances (like `m5a.8xlarge` and above), having two postgrest instances instead of one increase throughput. You can try this with:
-
-```bash
-export PGRSTBENCH_PGRST_NGNIX_LBS="true"
 postgrest-bench-deploy
 ```
 

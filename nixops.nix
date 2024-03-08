@@ -3,15 +3,13 @@ let
   sampleDb = ./sql/chinook.sql;
   postgrest = pkgs.callPackage ./postgrest/postgrest.nix {};
   tuning = import ./postgresql/tuning.nix;
-  global = import ./global.nix;
-  prefix = global.prefix;
+  prefix = (import ./global.nix).prefix;
   region = "us-east-2";
   accessKeyId = builtins.getEnv "PGRSTBENCH_AWS_PROFILE";
   env = {
     withNginx         = builtins.getEnv "PGRSTBENCH_WITH_NGINX" == "true";
     withUnixSocket    = builtins.getEnv "PGRSTBENCH_WITH_UNIX_SOCKET" == "true";
     withSeparatePg    = builtins.getEnv "PGRSTBENCH_SEPARATE_PG" == "true";
-    withNgnixLBS      = builtins.getEnv "PGRSTBENCH_PGRST_NGNIX_LBS" == "true";
 
     pgInstanceType     = builtins.getEnv "PGRSTBENCH_PG_INSTANCE_TYPE";
     pgrstInstanceType  = builtins.getEnv "PGRSTBENCH_PGRST_INSTANCE_TYPE";
@@ -126,95 +124,129 @@ in {
 
     systemd.services =
     let
-      pgHost =
-        if env.withSeparatePg then "pg"
-        else if env.withUnixSocket then ""
-        else "localhost";
-      pgrstConf = num : pkgs.writeText "pgrst${num}.conf" ''
-        db-uri = "postgres://postgres@${pgHost}/postgres"
-        db-schema = "public"
-        db-anon-role = "postgres"
-        db-use-legacy-gucs = false
-        db-pool = ${if builtins.stringLength env.pgrstPool == 0 then "20" else env.pgrstPool}
-        db-pool-timeout = 3600
+      pgrstSock = "/tmp/pgrst.sock";
+    in
+    {
+      postgrest =
+      let
+        pgHost =
+          if env.withSeparatePg then "pg"
+          else if env.withUnixSocket then ""
+          else "localhost";
+        pgrstConf = pkgs.writeText "pgrst.conf" ''
+          db-uri = "postgres://postgres@${pgHost}/postgres"
+          db-schema = "public"
+          db-anon-role = "postgres"
+          db-use-legacy-gucs = false
+          db-pool = ${if builtins.stringLength env.pgrstPool == 0 then "20" else env.pgrstPool}
+          db-pool-timeout = 3600
 
-        ${
-          if env.withNginx && env.withUnixSocket
-          then ''
-            server-unix-socket = "/tmp/pgrst${num}.sock"
-            server-unix-socket-mode = "777"
-          ''
-          else if env.withNginx
-          then ''
-            server-port = "3000"
-          ''
-          else ''
-            server-port = "80"
-          ''
-        }
+          ${
+            if env.withNginx && env.withUnixSocket
+            then ''
+              server-unix-socket = "${pgrstSock}"
+              server-unix-socket-mode = "777"
+            ''
+            else if env.withNginx
+            then ''
+              server-port = "3000"
+            ''
+            else ''
+              server-port = "80"
+            ''
+          }
 
-        jwt-secret = "reallyreallyreallyreallyverysafe"
-      '';
-      pgrstService = enabled: num: {
-        enable      = enabled;
+          jwt-secret = "reallyreallyreallyreallyverysafe"
+        '';
+      in
+      {
+        enable      = true;
         description = "postgrest daemon";
         after       = [ "postgresql.service" ];
         wantedBy    = [ "multi-user.target" ];
         serviceConfig = {
-          ExecStart = "${postgrest}/bin/postgrest ${pgrstConf num}";
+          ExecStart = "${postgrest}/bin/postgrest ${pgrstConf}";
           Restart = "always";
         };
       };
-    in
-    {
-      postgrest1 = pgrstService true "1";
-      postgrest2 = pgrstService env.withNgnixLBS "2";
-    };
+      nginx =
+      let
+        nginxConf = pkgs.writeText "nginx.conf" ''
+          daemon off;
+          worker_processes auto;
 
-    services.nginx = {
-      enable = env.withNginx;
-      config = ''
-        worker_processes auto;
-
-        events {
-   	  worker_connections 1024;
-	}
-
-        http {
-          upstream postgrest {
-            ${
-              if env.withUnixSocket && env.withNgnixLBS
-              then ''
-                server unix:/tmp/pgrst1.sock;
-                server unix:/tmp/pgrst2.sock;
-              ''
-              else if env.withUnixSocket
-              then
-              ''
-                server unix:/tmp/pgrst1.sock;
-              ''
-              else ''
-                server localhost:3000;
-              ''
-
-            }
-            keepalive 64;
-            keepalive_timeout 120s;
+          events {
+            worker_connections 1024;
           }
 
-          server {
-            listen 80 default_server;
-            listen [::]:80 default_server;
+          http {
+            upstream postgrest {
+              ${
+                if env.withUnixSocket
+                then
+                ''
+                  server unix:${pgrstSock};
+                ''
+                else ''
+                  server localhost:3000;
+                ''
 
-            location / {
-              proxy_set_header  Connection "";
-              proxy_set_header  Accept-Encoding  "";
-              proxy_http_version 1.1;
-              proxy_pass http://postgrest/;
+              }
+              keepalive 64;
+              keepalive_timeout 120s;
+            }
+
+            server {
+              listen 80 default_server;
+              listen [::]:80 default_server;
+
+              location / {
+                proxy_set_header  Connection "";
+                proxy_set_header  Accept-Encoding  "";
+                proxy_http_version 1.1;
+                proxy_pass http://postgrest/;
+              }
             }
           }
-        }
-      '';
+        '';
+        execCommand = "${pkgs.nginx}/bin/nginx -c '${nginxConf}'";
+      in
+      {
+        enable      = true;
+        description = "Nginx Web Server";
+        after       = [ "network.target" ];
+        wantedBy    = [ "multi-user.target" ];
+        startLimitIntervalSec = 60;
+        stopIfChanged = false;
+        preStart = "${execCommand} -t";
+        serviceConfig = {
+          ExecStart = execCommand;
+          ExecReload = [
+            "${execCommand} -t"
+            "${pkgs.coreutils}/bin/kill -HUP $MAINPID"
+          ];
+          Restart = "always";
+          RestartSec = "10";
+          # taken from https://github.com/NixOS/nixpkgs/blob/master/nixos/modules/services/web-servers/nginx/default.nix
+          # maybe not all are necessary
+          # Runtime directory and mode
+          RuntimeDirectory = "nginx";
+          RuntimeDirectoryMode = "0750";
+          # Cache directory and mode
+          CacheDirectory = "nginx";
+          CacheDirectoryMode = "0750";
+          # Logs directory and mode
+          LogsDirectory = "nginx";
+          LogsDirectoryMode = "0750";
+          # Proc filesystem
+          ProcSubset = "pid";
+          ProtectProc = "invisible";
+          # New file permissions
+          UMask = "0027"; # 0640 / 0750
+          # Security
+          NoNewPrivileges = true;
+        };
+      };
     };
 
     networking.firewall.allowedTCPPorts = [ 80 5432 ];
