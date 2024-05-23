@@ -1,6 +1,6 @@
 # PostgREST Benchmark
 
-Repeatable benchmark for PostgREST by using [Nix](https://nixos.org/) and [NixOps](https://github.com/NixOS/nixops).
+Reproducible benchmark for PostgREST by using [Nix](https://nixos.org/) and [NixOps](https://github.com/NixOS/nixops).
 
 NixOps provisions AWS EC2 instances on a dedicated VPC and deploys the different components for load testing.
 
