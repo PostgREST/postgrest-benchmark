@@ -36,6 +36,7 @@ let
       ''
         set -euo pipefail
 
+        echo -e "\nRunning k6 with $1 vus"
         nixops ssh -d ${prefix} client k6 run -q --vus $1 - < $2
       '';
   k6VariedVus =
@@ -53,9 +54,10 @@ let
       ''
         set -euo pipefail
 
+        echo -e "\nRunning pgbench with $1 clients"
         host=$([ "$PGRSTBENCH_SEPARATE_PG" = "true" ] && echo "pg" || echo "pgrst")
         # uses the full cores of the instance and prepared statements
-        nixops ssh -d ${prefix} client pgbench postgres -h $host -U postgres -j 16 -T 30 -c $1 --no-vacuum -f - < $2
+        nixops ssh -d ${prefix} client pgbench postgres -h "$host" -U postgres -j 16 -T 30 -c $1 --no-vacuum -f - < $2 || true
       '';
   clientPgBenchVaried =
     pkgs.writeShellScriptBin (prefix + "-pgbench-vary-clients")
@@ -67,39 +69,38 @@ let
           ${prefix}-pgbench $i $1
         done
       '';
-  ## execute a command by varing the size of pg instances, currently hardcoded to some m5a instances
-  ## pgrstbench-vary-pg pgrstbench-pgbench-varied-clients pgbench/GETSingle.sql > pgbench/results/PGBENCH_GET_SINGLE.txt
-  executeVaryAllPgInstances =
-    pkgs.writeShellScriptBin (prefix + "-vary-pg")
+  pgbenchK6Varied =
+    pkgs.writeShellScriptBin (prefix + "-pgbench-k6-vary")
       ''
         set -euo pipefail
 
-        for instance in 'm5a.large' 'm5a.xlarge' 'm5a.2xlarge' 'm5a.4xlarge' 'm5a.8xlarge'; do
-          export PGRSTBENCH_PG_INSTANCE_TYPE="$instance"
-
-          ${prefix}-deploy
-
-          echo -e "\nInstance: $PGRSTBENCH_PG_INSTANCE_TYPE\n"
-          $@
+        for i in '10' '50' '100'; do
+          echo -e "\n"
+          ${prefix}-pgbench $i $1
+          ${prefix}-k6 $i $2
         done
       '';
-  ## execute a command by varing the size of pg and pgrst instances, currently hardcoded to some m5a instances
-  ## pgrstbench-vary-pg-pgrst pgrbench-k6-varied-vus k6/GETSingle.js > k6/results/LB_K6_GET_SINGLE.txt
-  executeVaryAllPgPgrstInstances =
-    pkgs.writeShellScriptBin (prefix + "-vary-pg-pgrst")
+
+  ## execute a command by varing the size of pg and pgrst instances
+  ## postgrest-bench-vary-instances postgrest-bench-pgbench-k6-vary pgbench/GETSingle.sql k6/GETSingle.js &> GETSINGLE.txt
+  executeVaryInstances =
+    pkgs.writeShellScriptBin (prefix + "-vary-instances")
       ''
         set -euo pipefail
 
-        for instance in 'm5a.large' 'm5a.xlarge' 'm5a.2xlarge' 'm5a.4xlarge' 'm5a.8xlarge' 'm5a.12xlarge' 'm5a.16xlarge'; do
+        for instance in 't3a.nano' 't3a.xlarge' 't3a.2xlarge' 'm5a.4xlarge' 'm5a.8xlarge'; do
           export PGRSTBENCH_PG_INSTANCE_TYPE="$instance"
           export PGRSTBENCH_PGRST_INSTANCE_TYPE="$instance"
+
+          if [[ "$PGRSTBENCH_SEPARATE_PG" == "true" ]]; then
+            echo -e "\nChanging PostgreSQL and PostgREST EC2 instance type to: $instance\n"
+          else
+            echo -e "\nChanging server EC2 instance type to: $instance\n"
+          fi
 
           ${prefix}-deploy
 
           sleep 2s # TODO: sleep until pgrest establishes a connection to pg, this should be handled in a k6 setup
-
-          echo -e "\nPostgreSQL instance: $PGRSTBENCH_PG_INSTANCE_TYPE\n"
-          echo -e "PostgREST instance: $PGRSTBENCH_PGRST_INSTANCE_TYPE\n"
           $@
         done
       '';
@@ -133,8 +134,8 @@ pkgs.mkShell {
     destroy
     clientPgBench
     clientPgBenchVaried
-    executeVaryAllPgInstances
-    executeVaryAllPgPgrstInstances
+    pgbenchK6Varied
+    executeVaryInstances
   ];
   shellHook = ''
     export NIX_PATH="nixpkgs=${nixpkgs}:."

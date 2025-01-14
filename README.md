@@ -149,14 +149,14 @@ $ postgrest-bench-vary-pg-pgrst postgrest-bench-k6-vary-vus k6/GETSingle.js > K6
 To load test with nginx included do:
 
 ```bash
-export PGRBENCH_WITH_NGINX="true"
+export PGRSTBENCH_WITH_NGINX="true"
 postgrest-bench-deploy
 ```
 
 To only have PostgREST listening directly on port 80:
 
 ```bash
-export PGRBENCH_WITH_NGINX="false"
+export PGRSTBENCH_WITH_NGINX="false"
 postgrest-bench-deploy
 ```
 
@@ -165,14 +165,14 @@ postgrest-bench-deploy
 To load test connecting pgrest to pg with unix socket, and pgrest to nginx with unix socket.
 
 ```bash
-export PGRBENCH_WITH_UNIX_SOCKET="true"
+export PGRSTBENCH_WITH_UNIX_SOCKET="true"
 postgrest-bench-deploy
 ```
 
 To use tcp instead, you can do:
 
 ```bash
-export PGRBENCH_WITH_UNIX_SOCKET="false"
+export PGRSTBENCH_WITH_UNIX_SOCKET="false"
 postgrest-bench-deploy
 ```
 
@@ -181,34 +181,32 @@ postgrest-bench-deploy
 To load test with a pg on a different ec2 instance.
 
 ```bash
-export PGRBENCH_SEPARATE_PG="true"
+export PGRSTBENCH_SEPARATE_PG="true"
 postgrest-bench-deploy
 ```
 
 To use the same instance for both PostgreSQL and PostgREST.
 
 ```bash
-export PGRBENCH_SEPARATE_PG="false"
+export PGRSTBENCH_SEPARATE_PG="false"
 postgrest-bench-deploy
 ```
 
 ### Different EC2 instance types
 
-To change pg and PostgREST EC2 instance types(both `t3a.nano` by default):
+To change PostgreSQL and PostgREST EC2 instance types(both `t3a.nano` by default):
 
 ```bash
-export PGRBENCH_PG_INSTANCE_TYPE="t3a.xlarge"
-export PGRBENCH_PGRST_INSTANCE_TYPE="t3a.xlarge"
-export PGRBENCH_PGRST_INSTANCE_TYPE="t3a.xlarge"
+export PGRSTBENCH_PG_INSTANCE_TYPE="t3a.xlarge"
+export PGRSTBENCH_PGRST_INSTANCE_TYPE="t3a.xlarge"
 
 postgrest-bench-deploy
 ```
 
 ## Limitations
 
-- Uses an outdated version of NixOps, 1.7. Newer versions have changed considerably.
-- Don't try changing to ARM-based instances, these don't work with the above NixOps version.
-  + The instances tested for this benchmark are the `t3a` series and the `m5a` series.
+- The instances tested for this benchmark are the `t3a` series and the `m5a` series.
+  ARM-based instances, haven't been tested.
 
 ## Other benchmarks
 
