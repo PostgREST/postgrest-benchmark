@@ -82,20 +82,19 @@ let
       '';
 
   ## execute a command by varing the size of pg and pgrst instances
-  ## postgrest-bench-vary-instances postgrest-bench-pgbench-k6-vary pgbench/GETSingle.sql k6/GETSingle.js &> GETSINGLE.txt
+  ## postgrest-bench-vary-instances postgrest-bench-pgbench-k6-vary pgbench/GETSingle.sql k6/GETSingle.js > GETSINGLE2.txt
   executeVaryInstances =
     pkgs.writeShellScriptBin (prefix + "-vary-instances")
       ''
         set -euo pipefail
 
         for instance in 't3a.nano' 't3a.xlarge' 't3a.2xlarge' 'm5a.4xlarge' 'm5a.8xlarge'; do
-          export PGRSTBENCH_PG_INSTANCE_TYPE="$instance"
-          export PGRSTBENCH_PGRST_INSTANCE_TYPE="$instance"
+          export PGRSTBENCH_EC2_INSTANCE_TYPE="$instance"
 
           if [[ "$PGRSTBENCH_SEPARATE_PG" == "true" ]]; then
-            echo -e "\nChanging PostgreSQL and PostgREST EC2 instance type to: $instance\n"
+            echo -e "\nUsing a $instance EC2 instance type for pg and pgrst servers\n"
           else
-            echo -e "\nChanging server EC2 instance type to: $instance\n"
+            echo -e "\nUsing a $instance EC2 instance type for the pgrst server\n"
           fi
 
           ${prefix}-deploy
@@ -147,9 +146,7 @@ pkgs.mkShell {
     export PGRSTBENCH_WITH_UNIX_SOCKET="true"
     export PGRSTBENCH_SEPARATE_PG="true"
 
-    export PGRSTBENCH_CLIENT_INSTANCE_TYPE="m5a.xlarge"
-    export PGRSTBENCH_PG_INSTANCE_TYPE="t3a.nano"
-    export PGRSTBENCH_PGRST_INSTANCE_TYPE="t3a.nano"
+    export PGRSTBENCH_EC2_INSTANCE_TYPE="t3a.nano"
     export PGRSTBENCH_PG_LOGGING="false"
   '';
 }

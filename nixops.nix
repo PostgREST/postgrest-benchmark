@@ -9,9 +9,7 @@ let
     withNginx         = builtins.getEnv "PGRSTBENCH_WITH_NGINX" == "true";
     withUnixSocket    = builtins.getEnv "PGRSTBENCH_WITH_UNIX_SOCKET" == "true";
     withSeparatePg    = builtins.getEnv "PGRSTBENCH_SEPARATE_PG" == "true";
-
-    pgInstanceType     = builtins.getEnv "PGRSTBENCH_PG_INSTANCE_TYPE";
-    pgrstInstanceType  = builtins.getEnv "PGRSTBENCH_PGRST_INSTANCE_TYPE";
+    ec2InstanceType     = builtins.getEnv "PGRSTBENCH_EC2_INSTANCE_TYPE";
     clientInstanceType = builtins.getEnv "PGRSTBENCH_CLIENT_INSTANCE_TYPE";
 
     withPgLogging     =
@@ -102,9 +100,9 @@ in {
       ec2 = {
         inherit region accessKeyId;
         instanceType             =
-          if builtins.stringLength env.pgrstInstanceType == 0
+          if builtins.stringLength env.ec2InstanceType == 0
           then "t3a.nano"
-          else env.pgrstInstanceType;
+          else env.ec2InstanceType;
         associatePublicIpAddress = true;
         ebsInitialRootDiskSize   = 10;
         keyPair                  = resources.ec2KeyPairs.pgrstBenchKeyPair;
@@ -266,10 +264,7 @@ in {
       targetEnv = "ec2";
       ec2 = {
         inherit region accessKeyId;
-        instanceType             =
-          if builtins.stringLength env.clientInstanceType == 0
-          then "m5a.16xlarge"
-          else env.pgrstInstanceType;
+        instanceType             = "m5a.xlarge";
         associatePublicIpAddress = true;
         keyPair                  = resources.ec2KeyPairs.pgrstBenchKeyPair;
         subnetId                 = resources.vpcSubnets.pgrstBenchSubnet;
@@ -298,9 +293,9 @@ in {
       ec2 = {
         inherit region accessKeyId;
         instanceType             =
-          if builtins.stringLength env.pgInstanceType == 0
+          if builtins.stringLength env.ec2InstanceType == 0
           then "t3a.nano"
-          else env.pgInstanceType;
+          else env.ec2InstanceType;
         associatePublicIpAddress = true;
         ebsInitialRootDiskSize   = 10;
         keyPair                  = resources.ec2KeyPairs.pgrstBenchKeyPair;
