@@ -2,7 +2,6 @@ let
   pkgs = import <nixpkgs> {};
   sampleDb = ./sql/chinook.sql;
   postgrest = pkgs.callPackage ./postgrest/postgrest.nix {};
-  tuning = import ./postgresql/tuning.nix;
   prefix = (import ./global.nix).prefix;
   region = "us-east-2";
   accessKeyId = builtins.getEnv "PGRSTBENCH_AWS_PROFILE";
@@ -14,7 +13,6 @@ let
     pgInstanceType     = builtins.getEnv "PGRSTBENCH_PG_INSTANCE_TYPE";
     pgrstInstanceType  = builtins.getEnv "PGRSTBENCH_PGRST_INSTANCE_TYPE";
     clientInstanceType = builtins.getEnv "PGRSTBENCH_CLIENT_INSTANCE_TYPE";
-    pgrstPool          = builtins.getEnv "PGRSTBENCH_PGRST_POOL";
 
     withPgLogging     =
       pkgs.lib.optionalAttrs (builtins.getEnv "PGRSTBENCH_PG_LOGGING" == "true") {
@@ -23,6 +21,19 @@ let
         log_filename = "postgresql-%Y-%m-%d.log";
         log_statement = "all";
       };
+  };
+  pgService = settings: cidrBlock: {
+      enable = true;
+      package = pkgs.postgresql_12;
+      authentication = ''
+        local   all all trust
+        host    all all 127.0.0.1/32 trust
+        host    all all ::1/128 trust
+        host    all all ${cidrBlock} trust
+      '';
+      enableTCPIP = true; # listen_adresses = *
+      settings = settings // env.withPgLogging;
+      initialScript = sampleDb;
   };
 in {
   network.storage.legacy = {
@@ -108,19 +119,10 @@ in {
       pkgs.htop
     ];
 
-    services.postgresql = pkgs.lib.mkIf (!env.withSeparatePg) {
-      enable = true;
-      package = pkgs.postgresql_12;
-      authentication = ''
-        local   all all trust
-        host    all all 127.0.0.1/32 trust
-        host    all all ::1/128 trust
-        host    all all ${resources.vpcSubnets.pgrstBenchSubnet.cidrBlock} trust
-      '';
-      enableTCPIP = true; # listen_adresses = *
-      settings = builtins.getAttr config.deployment.ec2.instanceType tuning // env.withPgLogging;
-      initialScript = sampleDb;
-    };
+    services.postgresql = pkgs.lib.mkIf (!env.withSeparatePg)
+                          (pgService
+                            (builtins.getAttr config.deployment.ec2.instanceType (import ./postgresql/tuning.nix))
+                            resources.vpcSubnets.pgrstBenchSubnet.cidrBlock);
 
     systemd.services =
     let
@@ -138,7 +140,7 @@ in {
           db-schema = "public"
           db-anon-role = "postgres"
           db-use-legacy-gucs = false
-          db-pool = ${if builtins.stringLength env.pgrstPool == 0 then "20" else env.pgrstPool}
+          db-pool = ${builtins.toString (builtins.getAttr config.deployment.ec2.instanceType (import ./postgrest/tuning.nix))}
           db-pool-timeout = 3600
 
           ${
@@ -308,19 +310,9 @@ in {
     };
     boot.loader.grub.device = pkgs.lib.mkForce "/dev/nvme0n1"; # Fix for https://github.com/NixOS/nixpkgs/issues/62824#issuecomment-516369379
 
-    services.postgresql = {
-      enable = true;
-      package = pkgs.postgresql_12;
-      authentication = ''
-        local   all all trust
-        host    all all 127.0.0.1/32 trust
-        host    all all ::1/128 trust
-        host    all all ${resources.vpcSubnets.pgrstBenchSubnet.cidrBlock} trust
-      '';
-      enableTCPIP = true; # listen_adresses = *
-      settings = builtins.getAttr config.deployment.ec2.instanceType tuning // env.withPgLogging;
-      initialScript = sampleDb;
-    };
+    services.postgresql = pgService
+        (builtins.getAttr config.deployment.ec2.instanceType (import ./postgresql/tuning.nix))
+        resources.vpcSubnets.pgrstBenchSubnet.cidrBlock;
 
     networking.firewall.allowedTCPPorts = [ 5432 ];
   };

@@ -90,14 +90,9 @@ let
       ''
         set -euo pipefail
 
-        counter=0
-
         for instance in 'm5a.large' 'm5a.xlarge' 'm5a.2xlarge' 'm5a.4xlarge' 'm5a.8xlarge' 'm5a.12xlarge' 'm5a.16xlarge'; do
           export PGRSTBENCH_PG_INSTANCE_TYPE="$instance"
           export PGRSTBENCH_PGRST_INSTANCE_TYPE="$instance"
-          export PGRSTBENCH_PGRST_POOL=$((100 + counter*50))
-
-          counter=$((counter + 1))
 
           ${prefix}-deploy
 
@@ -105,7 +100,6 @@ let
 
           echo -e "\nPostgreSQL instance: $PGRSTBENCH_PG_INSTANCE_TYPE\n"
           echo -e "PostgREST instance: $PGRSTBENCH_PGRST_INSTANCE_TYPE\n"
-          echo -e "PostgREST Pool: $PGRSTBENCH_PGRST_POOL\n"
           $@
         done
       '';
@@ -155,7 +149,6 @@ pkgs.mkShell {
     export PGRSTBENCH_CLIENT_INSTANCE_TYPE="m5a.xlarge"
     export PGRSTBENCH_PG_INSTANCE_TYPE="t3a.nano"
     export PGRSTBENCH_PGRST_INSTANCE_TYPE="t3a.nano"
-    export PGRSTBENCH_PGRST_POOL="20"
     export PGRSTBENCH_PG_LOGGING="false"
   '';
 }
