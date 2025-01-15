@@ -10,7 +10,7 @@ The default setup includes:
 - A `t3a.nano` instance with PostgreSQL.
 - A `t3a.nano` instance with PostgREST + Nginx.
 
-This setup, including the size of the EC2 instances, can be modified with environment variables. As the PostgreSQL server instance size increases, its settings are modified according to [PGTune](https://pgtune.leopard.in.ua/) recommendations.
+This setup, including the size of the EC2 instances, can be modified with environment variables. As the EC2 instance size increases, PostgreSQL settings are modified according to [PGTune](https://pgtune.leopard.in.ua/) recommendations. PostgREST pool size is also tuned according to the EC2 instance size.
 
 ## Requirements
 
