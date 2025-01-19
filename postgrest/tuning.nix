@@ -1,4 +1,6 @@
-# Using 1/4 of PostgreSQL max_connections for the pool size
+# Using 1/4 of PostgreSQL max_connections for the pool size.
+# 1/4 is just because it was observed that the `t3a.nano` topped RPS
+# when the pool size was 10.
 {
   "t3a.nano"     = 10;
   "t3a.micro"    = 15;

@@ -6,20 +6,20 @@ NixOps provisions AWS EC2 instances on a dedicated VPC and deploys the different
 
 The default setup includes:
 
-- A `m5a.xlarge` instance which uses [k6](https://k6.io/) for load testing.
-- A `t3a.nano` instance with PostgreSQL.
-- A `t3a.nano` instance with PostgREST + Nginx.
-
-This setup, including the size of the EC2 instances, can be modified with environment variables. As the EC2 instance size increases, PostgreSQL settings are modified according to [PGTune](https://pgtune.leopard.in.ua/) recommendations. PostgREST pool size is also tuned according to the EC2 instance size.
+- A `m5a.4xlarge` instance which uses [k6](https://k6.io/) for load testing.
+- A `t3a.nano` instance with PostgreSQL + PostgREST + Nginx. The size of this EC2 instance, can be modified with environment variables.
+  + As the EC2 instance size increases, PostgreSQL settings are modified according to [PGTune](https://pgtune.leopard.in.ua/) recommendations.
+  + PostgREST pool size is also tuned according to the EC2 instance size.
+  + PostgreSQL can be split on its own EC2 instance by changing an env var. See `PGRSTBENCH_SEPARATE_PG` below.
 
 ## Requirements
+
+- [Nix](https://nixos.org/).
 
 - [AWS](https://aws.amazon.com) account with an `~/.aws/credentials` file in place (can be created with `aws-cli`). The "default" profile is picked up by default but you can change it by doing:
   ```
   export PGRSTBENCH_AWS_PROFILE="another_profile"
   ```
-
-- [Nix](https://nixos.org/).
 
 ## Quickstart
 
@@ -176,7 +176,7 @@ export PGRSTBENCH_WITH_UNIX_SOCKET="false"
 postgrest-bench-deploy
 ```
 
-### Separate PostgreSQL instance (default)
+### Separate PostgreSQL instance
 
 To load test with a pg on a different ec2 instance.
 

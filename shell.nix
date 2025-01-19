@@ -144,7 +144,7 @@ pkgs.mkShell {
 
     export PGRSTBENCH_WITH_NGINX="true"
     export PGRSTBENCH_WITH_UNIX_SOCKET="true"
-    export PGRSTBENCH_SEPARATE_PG="true"
+    export PGRSTBENCH_SEPARATE_PG="false"
 
     export PGRSTBENCH_EC2_INSTANCE_TYPE="t3a.nano"
     export PGRSTBENCH_PG_LOGGING="false"
