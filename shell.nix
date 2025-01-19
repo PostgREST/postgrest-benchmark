@@ -55,9 +55,9 @@ let
         set -euo pipefail
 
         echo -e "\nRunning pgbench with $1 clients"
-        host=$([ "$PGRSTBENCH_SEPARATE_PG" = "true" ] && echo "pg" || echo "pgrst")
         # uses the full cores of the instance and prepared statements
-        nixops ssh -d ${prefix} client pgbench postgres -h "$host" -U postgres -j 16 -T 30 -c $1 --no-vacuum -f - < $2 || true
+        # || true is added because the command might fail on lower instances with FATAL: sorry, too many clients already
+        nixops ssh -d ${prefix} client pgbench-tuned -c $1 -f - < $2 || true
       '';
   clientPgBenchVaried =
     pkgs.writeShellScriptBin (prefix + "-pgbench-vary-clients")

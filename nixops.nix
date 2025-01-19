@@ -258,7 +258,16 @@ in {
   client = {nodes, resources, ...}: {
     environment.systemPackages = [
       pkgs.k6
-      pkgs.postgresql_12 # only used for getting pgbench, no postgresql is started here
+      (pkgs.writeShellScriptBin "pgbench-tuned"
+      ''
+        set -euo pipefail
+
+        ${pkgs.postgresql_12}/bin/pgbench postgres -U postgres \
+          -h ${if env.withSeparatePg then "pg" else "pgrst"} \
+          -T 30 --no-vacuum \
+          --jobs ${builtins.toString (builtins.getAttr nodes.pgrst.config.deployment.ec2.instanceType (import ./postgrest/tuning.nix))} \
+          $@
+      '')
     ];
     deployment = {
       targetEnv = "ec2";
