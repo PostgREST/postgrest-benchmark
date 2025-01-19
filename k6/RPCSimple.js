@@ -5,7 +5,6 @@ import http from 'k6/http';
 const URL = "http://pgrst";
 
 export const options = {
-  duration: '30s',
   thresholds: {
     'failed requests': ['rate<0.1'],
     'http_req_duration': ['p(95)<1000']

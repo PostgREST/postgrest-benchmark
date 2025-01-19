@@ -3,6 +3,7 @@ let
   sampleDb = ./sql/chinook.sql;
   postgrest = pkgs.callPackage ./postgrest/postgrest.nix {};
   prefix = (import ./global.nix).prefix;
+  durationSeconds = (import ./global.nix).durationSeconds;
   region = "us-east-2";
   accessKeyId = builtins.getEnv "PGRSTBENCH_AWS_PROFILE";
   env = {
@@ -257,15 +258,22 @@ in {
 
   client = {nodes, resources, ...}: {
     environment.systemPackages = [
-      pkgs.k6
       (pkgs.writeShellScriptBin "pgbench-tuned"
       ''
         set -euo pipefail
 
         ${pkgs.postgresql_12}/bin/pgbench postgres -U postgres \
           -h ${if env.withSeparatePg then "pg" else "pgrst"} \
-          -T 30 --no-vacuum \
+          -T ${builtins.toString durationSeconds} --no-vacuum \
           --jobs ${builtins.toString (builtins.getAttr nodes.pgrst.config.deployment.ec2.instanceType (import ./postgrest/tuning.nix))} \
+          $@
+      '')
+      (pkgs.writeShellScriptBin "k6-tuned"
+      ''
+        set -euo pipefail
+
+        ${pkgs.k6}/bin/k6 run -q \
+          --duration ${builtins.toString durationSeconds + "s"} \
           $@
       '')
     ];

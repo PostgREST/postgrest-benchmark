@@ -37,7 +37,7 @@ let
         set -euo pipefail
 
         echo -e "\nRunning k6 with $1 vus"
-        nixops ssh -d ${prefix} client k6 run -q --vus $1 - < $2
+        nixops ssh -d ${prefix} client k6-tuned --vus $1 - < $2
       '';
   k6VariedVus =
     pkgs.writeShellScriptBin (prefix + "-k6-vary-vus")

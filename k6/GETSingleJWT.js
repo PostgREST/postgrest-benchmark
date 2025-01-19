@@ -21,7 +21,6 @@ const JWT = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibm
  */
 
 export const options = {
-  duration: '30s',
   thresholds: {
     'failed requests': ['rate<0.1'],
     'http_req_duration': ['p(95)<1000']
