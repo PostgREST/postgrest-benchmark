@@ -271,6 +271,7 @@ in {
         ${pkgs.postgresql_12}/bin/pgbench postgres -U postgres \
           -h ${if env.withSeparatePg then "pg" else "pgrst"} \
           -T ${builtins.toString durationSeconds} --no-vacuum \
+          -M prepared \
           --jobs ${pgbenchPoolSize} \
           -c ${pgbenchPoolSize} \
           $@

@@ -76,11 +76,7 @@ let
         for instance in 't3a.nano' 't3a.xlarge' 't3a.2xlarge' 'm5a.4xlarge' 'm5a.8xlarge'; do
           export PGRSTBENCH_EC2_INSTANCE_TYPE="$instance"
 
-          if [[ "$PGRSTBENCH_SEPARATE_PG" == "true" ]]; then
-            echo -e "\nUsing a $instance EC2 instance type for pg and pgrst servers\n"
-          else
-            echo -e "\nUsing a $instance EC2 instance type for the pgrst server\n"
-          fi
+          echo -e "\nUsing a $instance EC2 type for pgrst and client instances\n"
 
           ${prefix}-deploy
 
