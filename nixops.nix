@@ -139,7 +139,7 @@ in {
           db-schema = "public"
           db-anon-role = "postgres"
           db-use-legacy-gucs = false
-          db-pool = ${builtins.toString (builtins.getAttr config.deployment.ec2.instanceType (import ./postgrest/tuning.nix))}
+          db-pool = ${builtins.toString (builtins.getAttr config.deployment.ec2.instanceType (import ./clientPool.nix))}
           db-pool-timeout = 3600
 
           ${
@@ -256,16 +256,23 @@ in {
     };
   };
 
-  client = {nodes, resources, ...}: {
-    environment.systemPackages = [
+  client = {config, nodes, resources, ...}: {
+    environment.systemPackages =
+    let
+      pgbenchPoolSize = builtins.toString (builtins.getAttr config.deployment.ec2.instanceType (import ./clientPool.nix));
+    in
+    [
       (pkgs.writeShellScriptBin "pgbench-tuned"
       ''
         set -euo pipefail
 
+        echo -e "\nRunning pgbench with ${pgbenchPoolSize} clients and threads"
+
         ${pkgs.postgresql_12}/bin/pgbench postgres -U postgres \
           -h ${if env.withSeparatePg then "pg" else "pgrst"} \
           -T ${builtins.toString durationSeconds} --no-vacuum \
-          --jobs ${builtins.toString (builtins.getAttr nodes.pgrst.config.deployment.ec2.instanceType (import ./postgrest/tuning.nix))} \
+          --jobs ${pgbenchPoolSize} \
+          -c ${pgbenchPoolSize} \
           $@
       '')
       (pkgs.writeShellScriptBin "k6-tuned"
@@ -281,7 +288,9 @@ in {
       targetEnv = "ec2";
       ec2 = {
         inherit region accessKeyId;
-        instanceType             = "m5a.4xlarge";
+        instanceType             = if builtins.stringLength env.ec2InstanceType == 0
+                                    then "t3a.nano"
+                                    else env.ec2InstanceType;
         associatePublicIpAddress = true;
         keyPair                  = resources.ec2KeyPairs.pgrstBenchKeyPair;
         subnetId                 = resources.vpcSubnets.pgrstBenchSubnet;
@@ -309,10 +318,7 @@ in {
       targetEnv = "ec2";
       ec2 = {
         inherit region accessKeyId;
-        instanceType             =
-          if builtins.stringLength env.ec2InstanceType == 0
-          then "t3a.nano"
-          else env.ec2InstanceType;
+        instanceType             = "m5a.8xlarge";
         associatePublicIpAddress = true;
         ebsInitialRootDiskSize   = 10;
         keyPair                  = resources.ec2KeyPairs.pgrstBenchKeyPair;

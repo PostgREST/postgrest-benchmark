@@ -54,31 +54,16 @@ let
       ''
         set -euo pipefail
 
-        echo -e "\nRunning pgbench with $1 clients"
-        # uses the full cores of the instance and prepared statements
         # || true is added because the command might fail on lower instances with FATAL: sorry, too many clients already
-        nixops ssh -d ${prefix} client pgbench-tuned -c $1 -f - < $2 || true
-      '';
-  clientPgBenchVaried =
-    pkgs.writeShellScriptBin (prefix + "-pgbench-vary-clients")
-      ''
-        set -euo pipefail
-
-        for i in '10' '50' '100'; do
-          echo -e "\n"
-          ${prefix}-pgbench $i $1
-        done
+        nixops ssh -d ${prefix} client pgbench-tuned -f - < $1 || true
       '';
   pgbenchK6Varied =
     pkgs.writeShellScriptBin (prefix + "-pgbench-k6-vary")
       ''
         set -euo pipefail
 
-        for i in '10' '50' '100'; do
-          echo -e "\n"
-          ${prefix}-pgbench $i $1
-          ${prefix}-k6 $i $2
-        done
+        ${prefix}-pgbench $1
+        ${prefix}-k6-vary-vus $2
       '';
 
   ## execute a command by varing the size of pg and pgrst instances
@@ -132,7 +117,6 @@ pkgs.mkShell {
     ssh
     destroy
     clientPgBench
-    clientPgBenchVaried
     pgbenchK6Varied
     executeVaryInstances
   ];
@@ -144,7 +128,7 @@ pkgs.mkShell {
 
     export PGRSTBENCH_WITH_NGINX="true"
     export PGRSTBENCH_WITH_UNIX_SOCKET="true"
-    export PGRSTBENCH_SEPARATE_PG="false"
+    export PGRSTBENCH_SEPARATE_PG="true"
 
     export PGRSTBENCH_EC2_INSTANCE_TYPE="t3a.nano"
     export PGRSTBENCH_PG_LOGGING="false"

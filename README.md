@@ -6,11 +6,11 @@ NixOps provisions AWS EC2 instances on a dedicated VPC and deploys the different
 
 The default setup includes:
 
-- A `m5a.4xlarge` instance which uses [k6](https://k6.io/) for load testing.
-- A `t3a.nano` instance with PostgreSQL + PostgREST + Nginx. The size of this EC2 instance, can be modified with environment variables.
-  + As the EC2 instance size increases, PostgreSQL settings are modified according to [PGTune](https://pgtune.leopard.in.ua/) recommendations.
-  + PostgREST pool size is also tuned according to the EC2 instance size.
-  + PostgreSQL can be split on its own EC2 instance by changing an env var. See `PGRSTBENCH_SEPARATE_PG` below.
+- A `m5a.8xlarge` PostgreSQL server instance. Tuned according to [PGTune](https://pgtune.leopard.in.ua/) recommendations.
+- A `t3a.nano` client instance with PostgREST + Nginx. The size of this EC2 instance, can be modified with environment variables.
+  + PostgREST pool size is tuned according to the EC2 instance size.
+- A `t3a.nano` client instance with k6. The size of this EC2 instance, can be modified with environment variables.
+- All networking is setup so the client instances can reach the server instance.
 
 ## Requirements
 
@@ -109,7 +109,7 @@ There are different scripts on `k6/` which test different PostgREST requests.
 pgbench also runs on the client instance, you can get its output with:
 
 ```
-$ postgrest-bench-pgbench 20 pgbench/GETSingle.sql
+$ postgrest-bench-pgbench pgbench/GETSingle.sql
 ```
 
 The `GETSingle.sql` runs an equivalent SQL statement to what PostgREST generates for `GETSingle.js`. The motivation for this comparison is to see how much PostgREST performance differs from direct SQL connections.
@@ -118,28 +118,16 @@ The `GETSingle.sql` runs an equivalent SQL statement to what PostgREST generates
 
 There are scripts that help with varying the environment while load testing. You can use these to get a report once the command finishes running:
 
-Run pgbench with a different qty of clients:
-
-```
-$ postgrest-bench-pgbench-vary-clients pgbench/GETSingle.sql
-```
-
 Run k6 with a different qty of VUs:
 
 ```
-$ postgrest-bench-k6-vary-vus k6/GETSingle.js
+$ postgrest-bench-k6-vary k6/GETSingle.js
 ```
 
-Run pgbench with varied clients and with varied pg instances (this will involve reprovisioning/redeploying the pg instance, it will take a while):
+Run k6 with varied vus and with varied ec2 instances for the client and pgrst instances (this will involve reprovisioning/redeploying the client and pgrst instance, it will take a while):
 
 ```
-$ postgrest-bench-vary-pg postgrest-bench-pgbench-vary-clients pgbench/GETSingle.sql > PGBENCH_GET_SINGLE.txt
-```
-
-Run k6 with varied vus and with varied pg instances and pgrst instances (this will involve reprovisioning/redeploying the pg and pgrst instance, it will take even longer):
-
-```
-$ postgrest-bench-vary-pg-pgrst postgrest-bench-k6-vary-vus k6/GETSingle.js > K6_GET_SINGLE.txt
+$ postgrest-bench-vary-instances postgrest-bench-k6-vary k6/GETSingle.js > K6_GET_SINGLE.txt
 ```
 
 ## Different Setups
@@ -176,7 +164,7 @@ export PGRSTBENCH_WITH_UNIX_SOCKET="false"
 postgrest-bench-deploy
 ```
 
-### Separate PostgreSQL instance
+### Separate PostgreSQL instance (default)
 
 To load test with a pg on a different ec2 instance.
 
