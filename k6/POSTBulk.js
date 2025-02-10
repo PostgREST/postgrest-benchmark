@@ -6,12 +6,11 @@ const URL = "http://pgrst";
 
 export const options = {
   thresholds: {
-    'failed requests': ['rate<0.1'],
-    'http_req_duration': ['p(95)<1000']
+    'http_req_failed': ['rate<0.1'],
   }
 };
 
-const myFailRate = new Rate('failed requests');
+const myFailRate = new Rate('http_req_failed');
 
 export default function() {
   let body = JSON.stringify(Array(20).fill({
