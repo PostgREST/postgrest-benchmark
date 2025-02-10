@@ -6,6 +6,7 @@ let
   durationSeconds = (import ./global.nix).durationSeconds;
   region = "us-east-2";
   accessKeyId = builtins.getEnv "PGRSTBENCH_AWS_PROFILE";
+  maxFileDescriptors = 500000;
   env = {
     withNginx         = builtins.getEnv "PGRSTBENCH_WITH_NGINX" == "true";
     withUnixSocket    = builtins.getEnv "PGRSTBENCH_WITH_UNIX_SOCKET" == "true";
@@ -168,6 +169,7 @@ in {
         serviceConfig = {
           ExecStart = "${postgrest}/bin/postgrest ${pgrstConf}";
           Restart = "always";
+          LimitNOFILE = maxFileDescriptors;
         };
       };
       nginx =
@@ -246,6 +248,7 @@ in {
           UMask = "0027"; # 0640 / 0750
           # Security
           NoNewPrivileges = true;
+          LimitNOFILE = maxFileDescriptors;
         };
       };
     };
