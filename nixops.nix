@@ -8,11 +8,11 @@ let
   accessKeyId = builtins.getEnv "PGRSTBENCH_AWS_PROFILE";
   maxFileDescriptors = 500000;
   env = {
-    withNginx         = builtins.getEnv "PGRSTBENCH_WITH_NGINX" == "true";
-    withUnixSocket    = builtins.getEnv "PGRSTBENCH_WITH_UNIX_SOCKET" == "true";
-    withSeparatePg    = builtins.getEnv "PGRSTBENCH_SEPARATE_PG" == "true";
-    ec2InstanceType     = builtins.getEnv "PGRSTBENCH_EC2_INSTANCE_TYPE";
-    clientInstanceType = builtins.getEnv "PGRSTBENCH_CLIENT_INSTANCE_TYPE";
+    withNginx             = builtins.getEnv "PGRSTBENCH_WITH_NGINX" == "true";
+    withUnixSocket        = builtins.getEnv "PGRSTBENCH_WITH_UNIX_SOCKET" == "true";
+    withSeparatePg        = builtins.getEnv "PGRSTBENCH_SEPARATE_PG" == "true";
+    ec2InstanceType       = builtins.getEnv "PGRSTBENCH_EC2_INSTANCE_TYPE";
+    ec2ClientInstanceType = builtins.getEnv "PGRSTBENCH_EC2_CLIENT_INSTANCE_TYPE";
 
     withPgLogging     =
       pkgs.lib.optionalAttrs (builtins.getEnv "PGRSTBENCH_PG_LOGGING" == "true") {
@@ -142,6 +142,8 @@ in {
           db-use-legacy-gucs = false
           db-pool = ${builtins.toString (builtins.getAttr config.deployment.ec2.instanceType (import ./clientPool.nix))}
           db-pool-timeout = 3600
+          jwt-cache-max-lifetime = 86400
+          admin-server-port = 3001
 
           ${
             if env.withNginx && env.withUnixSocket
@@ -292,9 +294,12 @@ in {
       targetEnv = "ec2";
       ec2 = {
         inherit region accessKeyId;
-        instanceType             = if builtins.stringLength env.ec2InstanceType == 0
-                                    then "t3a.nano"
-                                    else env.ec2InstanceType;
+        instanceType             = if builtins.stringLength env.ec2ClientInstanceType != 0
+                                     then env.ec2ClientInstanceType
+                                   else if builtins.stringLength env.ec2InstanceType != 0
+                                     then env.ec2InstanceType
+                                   else
+                                     "t3a.nano";
         associatePublicIpAddress = true;
         keyPair                  = resources.ec2KeyPairs.pgrstBenchKeyPair;
         subnetId                 = resources.vpcSubnets.pgrstBenchSubnet;

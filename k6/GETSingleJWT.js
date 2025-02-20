@@ -1,5 +1,4 @@
 import { Rate } from "k6/metrics";
-import { check, group, sleep } from 'k6';
 import http from 'k6/http';
 
 const URL = "http://pgrst";
@@ -22,13 +21,10 @@ const JWT = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibm
 
 export const options = {
   thresholds: {
-    'failed requests': ['rate<0.1'],
+    'http_req_failed': ['rate<0.1'],
     'http_req_duration': ['p(95)<1000']
   }
 };
-
-const myFailRate = new Rate('failed requests');
-
 
 export default function() {
   const params = {
@@ -38,5 +34,4 @@ export default function() {
   };
   let id =  Math.floor((Math.random() * 275) + 1);
   let res = http.get(URL + "/artist?select=*&artist_id=eq." + id, params);
-  myFailRate.add(res.status !== 200);
 }
