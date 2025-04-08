@@ -6,6 +6,7 @@ import { b64encode } from 'k6/encoding';
 
 const URL = "http://pgrst";
 const SECRET = 'reallyreallyreallyreallyverysafe';
+const TOKEN_COUNT = 20000; // Pre-generated tokens
 
 export const options = {
   thresholds: {
@@ -55,9 +56,22 @@ function generateJWT() {
   return `${encodedHeader}.${encodedPayload}.${encodedSignature}`;
 }
 
-export default function() {
-  // Generate a new JWT for each iteration/request
-  const token = generateJWT();
+// Setup function executed once before the test run.
+// It pre-generates tokens and passes them to the default function.
+export function setup() {
+  const tokens = [];
+  for (let i = 0; i < TOKEN_COUNT; i++) {
+    tokens.push(generateJWT());
+  }
+
+  return { tokens };
+}
+
+// Default function: runs on each virtual user iteration.
+export default function(data) {
+  // Select a random token from the pre-generated pool
+  const tokens = data.tokens;
+  const token = tokens[Math.floor(Math.random() * tokens.length)];
 
   const params = {
     headers: {
