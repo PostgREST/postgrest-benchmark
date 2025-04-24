@@ -2,9 +2,11 @@ let
   pkgs = import <nixpkgs> {};
   sampleDb = ./sql/chinook.sql;
   postgrest = pkgs.callPackage ./postgrest/postgrest.nix {};
-  prefix = (import ./global.nix).prefix;
-  durationSeconds = (import ./global.nix).durationSeconds;
-  region = "us-east-2";
+  global = (import ./global.nix);
+  prefix = global.prefix;
+  durationSeconds = global.durationSeconds;
+  region = global.region;
+  nixosAMI = builtins.toString (builtins.readFile ./${global.nixosAMIFile});
   accessKeyId = builtins.getEnv "PGRSTBENCH_AWS_PROFILE";
   maxFileDescriptors = 500000;
   env = {
@@ -110,6 +112,7 @@ in {
         keyPair                  = resources.ec2KeyPairs.pgrstBenchKeyPair;
         subnetId                 = resources.vpcSubnets.pgrstBenchSubnet;
         securityGroupIds         = [resources.ec2SecurityGroups.pgrstBenchSecGroup.name];
+        ami = nixosAMI;
       };
     };
     boot.loader.grub.device = pkgs.lib.mkForce "/dev/nvme0n1"; # Fix for https://github.com/NixOS/nixpkgs/issues/62824#issuecomment-516369379
@@ -304,6 +307,7 @@ in {
         keyPair                  = resources.ec2KeyPairs.pgrstBenchKeyPair;
         subnetId                 = resources.vpcSubnets.pgrstBenchSubnet;
         securityGroupIds         = [resources.ec2SecurityGroups.pgrstBenchSecGroup.name];
+        ami = nixosAMI;
       };
     };
     boot.loader.grub.device = pkgs.lib.mkForce "/dev/nvme0n1";
@@ -333,6 +337,7 @@ in {
         keyPair                  = resources.ec2KeyPairs.pgrstBenchKeyPair;
         subnetId                 = resources.vpcSubnets.pgrstBenchSubnet;
         securityGroupIds         = [resources.ec2SecurityGroups.pgrstBenchSecGroup.name];
+        ami = nixosAMI;
       };
     };
     boot.loader.grub.device = pkgs.lib.mkForce "/dev/nvme0n1"; # Fix for https://github.com/NixOS/nixpkgs/issues/62824#issuecomment-516369379
