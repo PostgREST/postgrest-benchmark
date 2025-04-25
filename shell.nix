@@ -143,6 +143,9 @@ pkgs.mkShell {
     export PGRSTBENCH_SEPARATE_PG="true"
 
     export PGRSTBENCH_EC2_INSTANCE_TYPE="t3a.nano"
+    export PGRSTBENCH_EC2_CLIENT_INSTANCE_TYPE="m5a.8xlarge"
     export PGRSTBENCH_PG_LOGGING="false"
+    export PGRSTBENCH_JWT_CACHE_ENABLED="true"
+    export PGRSTBENCH_USE_DEVEL="false"
   '';
 }

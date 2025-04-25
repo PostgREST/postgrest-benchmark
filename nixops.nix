@@ -1,7 +1,6 @@
 let
   pkgs = import <nixpkgs> {};
   sampleDb = ./sql/chinook.sql;
-  postgrest = pkgs.callPackage ./postgrest/postgrest.nix {};
   global = (import ./global.nix);
   prefix = global.prefix;
   durationSeconds = global.durationSeconds;
@@ -15,7 +14,8 @@ let
     withSeparatePg        = builtins.getEnv "PGRSTBENCH_SEPARATE_PG" == "true";
     ec2InstanceType       = builtins.getEnv "PGRSTBENCH_EC2_INSTANCE_TYPE";
     ec2ClientInstanceType = builtins.getEnv "PGRSTBENCH_EC2_CLIENT_INSTANCE_TYPE";
-
+    pgrstUseDevel         = builtins.getEnv "PGRSTBENCH_USE_DEVEL" == "true";
+    pgrstJWTCacheEnabled  = builtins.getEnv "PGRSTBENCH_JWT_CACHE_ENABLED" == "true";
     withPgLogging     =
       pkgs.lib.optionalAttrs (builtins.getEnv "PGRSTBENCH_PG_LOGGING" == "true") {
         logging_collector = "on";
@@ -37,6 +37,9 @@ let
       settings = settings // env.withPgLogging;
       initialScript = sampleDb;
   };
+  postgrest = if env.pgrstUseDevel
+    then pkgs.callPackage ./postgrest/postgrest-devel.nix {}
+    else pkgs.callPackage ./postgrest/postgrest.nix {};
 in {
   network.storage.legacy = {
     databasefile = "~/.deployments.nixops";
@@ -145,7 +148,11 @@ in {
           db-use-legacy-gucs = false
           db-pool = ${builtins.toString (builtins.getAttr config.deployment.ec2.instanceType (import ./clientPool.nix))}
           db-pool-timeout = 3600
-          jwt-cache-max-lifetime = 86400
+          ${
+            if env.pgrstJWTCacheEnabled
+              then "jwt-cache-max-lifetime = 86400"
+              else ""
+          }
           admin-server-port = 3001
 
           ${
