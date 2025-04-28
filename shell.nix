@@ -67,7 +67,8 @@ let
       '';
 
   ## execute a command by varing the size of pg and pgrst instances
-  ## postgrest-bench-vary-instances postgrest-bench-pgbench-k6-vary pgbench/GETSingle.sql k6/GETSingle.js > GETSINGLE2.txt
+  ## postgrest-bench-vary-instances postgrest-bench-pgbench-k6-vary pgbench/GETSingle.sql k6/GETSingle.js > GETSINGLE.txt
+  ## postgrest-bench-vary-instances postgrest-bench-k6-vary-vus k6/GETSingle.js > GETSINGLE2.txt
   executeVaryInstances =
     pkgs.writeShellScriptBin (prefix + "-vary-instances")
       ''
@@ -76,7 +77,11 @@ let
         for instance in 't3a.nano' 't3a.xlarge' 't3a.2xlarge' 'm5a.4xlarge' 'm5a.8xlarge'; do
           export PGRSTBENCH_EC2_INSTANCE_TYPE="$instance"
 
-          echo -e "\nUsing a $instance EC2 type for pgrst and client instances\n"
+          if [ -z "$PGRSTBENCH_EC2_CLIENT_INSTANCE_TYPE" ]; then
+            echo -e "\nUsing a $instance EC2 type for pgrst and client instances\n"
+          else
+            echo -e "\nUsing a $instance EC2 type for pgrst\n"
+          fi
 
           ${prefix}-deploy
 
