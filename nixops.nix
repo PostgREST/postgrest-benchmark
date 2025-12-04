@@ -147,11 +147,10 @@ in {
           db-anon-role = "postgres"
           db-use-legacy-gucs = false
           db-pool = ${builtins.toString (builtins.getAttr config.deployment.ec2.instanceType (import ./clientPool.nix))}
-          db-pool-timeout = 3600
           ${
             if env.pgrstJWTCacheEnabled
-              then "jwt-cache-max-lifetime = 86400"
-              else ""
+              then ""
+              else "jwt-cache-max-entries = 0"
           }
           admin-server-port = 3001
 
