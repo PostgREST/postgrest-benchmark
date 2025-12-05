@@ -23874,3 +23874,7 @@ $$ language sql stable;
 create or replace function add_them(a int, b int, c int, d int, e int) returns int as $$
   select a + b + c + d + e;
 $$ language sql immutable;
+
+create or replace function sleep(seconds double precision default 5) returns void as $$
+  select pg_sleep(seconds);
+$$ language sql;
