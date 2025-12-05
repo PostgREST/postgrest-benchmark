@@ -8,6 +8,7 @@ let
   nixosAMI = builtins.toString (builtins.readFile ./${global.nixosAMIFile});
   accessKeyId = builtins.getEnv "PGRSTBENCH_AWS_PROFILE";
   maxFileDescriptors = 500000;
+  pgPackage = pkgs.postgresql_13;
   env = {
     withNginx             = builtins.getEnv "PGRSTBENCH_WITH_NGINX" == "true";
     withUnixSocket        = builtins.getEnv "PGRSTBENCH_WITH_UNIX_SOCKET" == "true";
@@ -26,7 +27,7 @@ let
   };
   pgService = settings: cidrBlock: {
       enable = true;
-      package = pkgs.postgresql_12;
+      package = pgPackage;
       authentication = ''
         local   all all trust
         host    all all 127.0.0.1/32 trust
@@ -146,7 +147,7 @@ in {
           db-schema = "public"
           db-anon-role = "postgres"
           db-use-legacy-gucs = false
-          db-pool = ${builtins.toString (builtins.getAttr config.deployment.ec2.instanceType (import ./clientPool.nix))}
+          db-pool = 1
           ${
             if env.pgrstJWTCacheEnabled
               then ""
@@ -282,7 +283,7 @@ in {
 
         echo -e "\nRunning pgbench with ${pgbenchPoolSize} clients and threads"
 
-        ${pkgs.postgresql_12}/bin/pgbench postgres -U postgres \
+        ${pgPackage}/bin/pgbench postgres -U postgres \
           -h ${if env.withSeparatePg then "pg" else "pgrst"} \
           -T ${builtins.toString durationSeconds} --no-vacuum \
           -M prepared \
