@@ -21,7 +21,7 @@ let
           nixops create -d ${prefix}
         fi
 
-        nixops deploy -k -d ${prefix} --allow-reboot --confirm
+        nixops deploy -k -d ${prefix} --allow-reboot --confirm --option system x86_64-linux
       '';
   info =
     pkgs.writeShellScriptBin (prefix + "-info")
