@@ -105,7 +105,7 @@ in {
 
   pgrst = {nodes, config, resources, ...}:
   {
-    nixpkgs.localSystem.system = "x86_64-linux";
+    nixpkgs.hostPlatform = "x86_64-linux";
     deployment = {
       targetEnv = "ec2";
       ec2 = {
@@ -276,7 +276,7 @@ in {
 
   client = {config, nodes, resources, ...}:
   {
-    nixpkgs.localSystem.system = "x86_64-linux";
+    nixpkgs.hostPlatform = "x86_64-linux";
     environment.systemPackages =
     let
       pgbenchPoolSize = builtins.toString (builtins.getAttr config.deployment.ec2.instanceType (import ./clientPool.nix));
@@ -339,7 +339,7 @@ in {
 // pkgs.lib.optionalAttrs env.withSeparatePg
 {
   pg = {resources, config, ...}: rec {
-    nixpkgs.localSystem.system = "x86_64-linux";
+    nixpkgs.hostPlatform = "x86_64-linux";
     deployment = {
       targetEnv = "ec2";
       ec2 = {
