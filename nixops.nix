@@ -154,6 +154,7 @@ in {
               else "jwt-cache-max-entries = 0"
           }
           admin-server-port = 3001
+          server-host = "*6"
 
           ${
             if env.withNginx && env.withUnixSocket
