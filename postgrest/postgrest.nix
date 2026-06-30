@@ -2,10 +2,10 @@
 
 stdenv.mkDerivation rec {
   name = "postgrest";
-  version = "v14.1";
+  version = "v14.14";
   src = fetchurl {
     url = "https://github.com/PostgREST/postgrest/releases/download/${version}/postgrest-${version}-linux-static-x86-64.tar.xz";
-    sha256 = "sha256-vatqszicoNbB87g2NJFnTbynGHXD8wJh2S2P7N3jUnc=";
+    sha256 = "sha256-4mJBDOfmH2f7vCHhIvozTaa3cDj5eIE/oJXV4pUSJ9A=";
   };
   phases = ["installPhase" "patchPhase"];
   installPhase = ''
