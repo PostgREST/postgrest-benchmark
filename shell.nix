@@ -115,7 +115,7 @@ let
         # query taken from https://nixos.github.io/amis/
         ${pkgs.awscli}/bin/aws ec2 describe-images --owners 427812963091 \
           --region us-east-2 \
-          --filter 'Name=name,Values=nixos/24.11*' 'Name=architecture,Values=x86_64' \
+          --filter 'Name=name,Values=nixos/25.11*' 'Name=architecture,Values=x86_64' \
           --query 'sort_by(Images, &CreationDate)[0].ImageId' --output text  \
         | ${pkgs.coreutils}/bin/tr -d '\n' \
         > ${global.nixosAMIFile}
