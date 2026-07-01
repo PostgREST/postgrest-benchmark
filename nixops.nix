@@ -11,6 +11,7 @@ let
   pgPackage = pkgs.postgresql_14;
   env = {
     withNginx             = builtins.getEnv "PGRSTBENCH_WITH_NGINX" == "true";
+    withMaxFds            = builtins.getEnv "PGRSTBENCH_MAX_FDS" == "true";
     withUnixSocket        = builtins.getEnv "PGRSTBENCH_WITH_UNIX_SOCKET" == "true";
     withSeparatePg        = builtins.getEnv "PGRSTBENCH_SEPARATE_PG" == "true";
     ec2InstanceType       = builtins.getEnv "PGRSTBENCH_EC2_INSTANCE_TYPE";
@@ -182,6 +183,7 @@ in {
         serviceConfig = {
           ExecStart = "${postgrest}/bin/postgrest ${pgrstConf}";
           Restart = "always";
+        } // pkgs.lib.optionalAttrs (env.withMaxFds) {
           LimitNOFILE = maxFileDescriptors;
         };
       };
@@ -261,6 +263,7 @@ in {
           UMask = "0027"; # 0640 / 0750
           # Security
           NoNewPrivileges = true;
+        } // pkgs.lib.optionalAttrs (env.withMaxFds) {
           LimitNOFILE = maxFileDescriptors;
         };
       };

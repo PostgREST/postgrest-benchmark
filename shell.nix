@@ -152,5 +152,6 @@ pkgs.mkShell {
     export PGRSTBENCH_PG_LOGGING="false"
     export PGRSTBENCH_JWT_CACHE_ENABLED="true"
     export PGRSTBENCH_USE_DEVEL="false"
+    export PGRSTBENCH_MAX_FDS="true"
   '';
 }
