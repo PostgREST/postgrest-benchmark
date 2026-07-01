@@ -8,7 +8,7 @@ let
   nixosAMI = builtins.toString (builtins.readFile ./${global.nixosAMIFile});
   accessKeyId = builtins.getEnv "PGRSTBENCH_AWS_PROFILE";
   maxFileDescriptors = 500000;
-  pgPackage = pkgs.postgresql_13;
+  pgPackage = pkgs.postgresql_14;
   env = {
     withNginx             = builtins.getEnv "PGRSTBENCH_WITH_NGINX" == "true";
     withUnixSocket        = builtins.getEnv "PGRSTBENCH_WITH_UNIX_SOCKET" == "true";
