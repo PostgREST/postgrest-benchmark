@@ -148,7 +148,7 @@ in {
           db-schema = "public"
           db-anon-role = "postgres"
           db-use-legacy-gucs = false
-          db-pool = 1
+          db-pool = ${builtins.toString (builtins.getAttr config.deployment.ec2.instanceType (import ./clientPool.nix))}
           ${
             if env.pgrstJWTCacheEnabled
               then ""
