@@ -1,8 +1,40 @@
 import { Rate } from "k6/metrics";
 import http from 'k6/http';
+import { hmac } from 'k6/crypto';
+import { b64encode } from 'k6/encoding';
 
 const URL = "http://pgrst";
-const JWT = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyLCJyb2xlIjoicG9zdGdyZXMiLCJjdXN0b20iOnsiZW1haWwiOiJlbWFpbEBtYWlsLmNvbSIsInBob25lIjoiKzc3MTIzLTU1NTUiLCJjb21wYW55IjoiQWNtZSIsInV1aWQiOiJiYTFhOGU0Yy0yYzc4LTRmZTgtYjM5Yi1lY2M3NmRkYTU1M2QifX0.D2L71px3mDVb9TQREGpBUEu2YQiVjSLH4qrTyqLd8fQ";
+const SECRET = 'reallyreallyreallyreallyverysafe';
+
+function generateJWT(iat) {
+  const header = {
+    alg: 'HS256',
+    typ: 'JWT'
+  };
+  const payload = {
+    sub: '1234567890',
+    name: 'John Doe',
+    iat,
+    role: 'postgres',
+    custom: {
+      email: 'email@mail.com',
+      phone: '+77123-5555',
+      company: 'Acme',
+      uuid: 'ba1a8e4c-2c78-4fe8-b39b-ecc76dda553d'
+    }
+  };
+
+  const encodedHeader = b64encode(JSON.stringify(header), 'rawurl');
+  const encodedPayload = b64encode(JSON.stringify(payload), 'rawurl');
+  const toSign = `${encodedHeader}.${encodedPayload}`;
+  const signature = b64encode(hmac('sha256', SECRET, toSign, 'binary'), 'rawurl');
+
+  return `${toSign}.${signature}`;
+}
+
+function getJWT() {
+  return generateJWT(Math.floor(Date.now() / 1000));
+}
 // JWT is:
 /*
  *{
@@ -29,7 +61,7 @@ export const options = {
 export default function() {
   const params = {
     headers: {
-      Authorization: `Bearer ${JWT}`,
+      Authorization: `Bearer ${getJWT()}`,
     },
   };
   let id =  Math.floor((Math.random() * 275) + 1);
