@@ -196,6 +196,14 @@ postgrest-bench-deploy
 - The instances tested for this benchmark are the `t3a` series and the `m5a` series.
   ARM-based instances, haven't been tested.
 
+- When the NixOS AMI goes out out of date, you can get these errors:
+  ```
+  * client: list index out of range
+  * pg: list index out of range
+  * pgrst: list index out of range
+  ```
+  + To solve this run `postgrest-bench-generate-ami`
+
 ## Other benchmarks
 
 + [majkinetor/postgrest-test](https://github.com/majkinetor/postgrest-test): PostgREST benchmark on Windows.
