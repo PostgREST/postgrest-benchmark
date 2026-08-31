@@ -295,14 +295,7 @@ in {
           -c ${pgbenchPoolSize} \
           $@
       '')
-      (pkgs.writeShellScriptBin "k6-tuned"
-      ''
-        set -euo pipefail
-
-        ${pkgs.k6}/bin/k6 run -q \
-          --duration ${builtins.toString durationSeconds + "s"} \
-          $@
-      '')
+      pkgs.k6
     ];
     deployment = {
       targetEnv = "ec2";
