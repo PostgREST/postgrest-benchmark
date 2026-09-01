@@ -1,14 +1,20 @@
-{ stdenv, fetchurl, lib }:
+{ stdenv, fetchurl, lib, postgrestBin ? "" }:
+
+let
+  usePostgrestBin = postgrestBin != "";
+in
 
 stdenv.mkDerivation rec {
-  name = "postgrest";
-  version = "v14.17";
-  src = fetchurl {
+  name = if usePostgrestBin then "postgrest-devel" else "postgrest";
+  version = if usePostgrestBin then "devel" else "v14.17";
+  src = if usePostgrestBin then postgrestBin else fetchurl {
     url = "https://github.com/PostgREST/postgrest/releases/download/${version}/postgrest-${version}-linux-static-x86-64.tar.xz";
     sha256 = "sha256-1uE5JkV0h8mbdzZteV3PoycAVU0I1BgTHZpOo/bKJeM=";
   };
   phases = ["installPhase" "patchPhase"];
-  installPhase = ''
+  installPhase = if usePostgrestBin then ''
+    install -Dm755 $src $out/bin/postgrest
+  '' else ''
     mkdir -p $out/bin
     tar xJvf $src
     cp postgrest $out/bin/postgrest

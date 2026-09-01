@@ -16,7 +16,12 @@ let
     withSeparatePg        = builtins.getEnv "PGRSTBENCH_SEPARATE_PG" == "true";
     ec2InstanceType       = builtins.getEnv "PGRSTBENCH_EC2_INSTANCE_TYPE";
     ec2ClientInstanceType = builtins.getEnv "PGRSTBENCH_EC2_CLIENT_INSTANCE_TYPE";
-    pgrstUseDevel         = builtins.getEnv "PGRSTBENCH_USE_DEVEL" == "true";
+    postgrestBin =
+      let configuredBin = builtins.getEnv "PGRSTBENCH_POSTGREST_BIN";
+      in
+        if configuredBin == ""
+        then ""
+        else /. + configuredBin;
     pgrstJWTCacheEnabled  = builtins.getEnv "PGRSTBENCH_JWT_CACHE_ENABLED" == "true";
     withPgLogging     =
       pkgs.lib.optionalAttrs (builtins.getEnv "PGRSTBENCH_PG_LOGGING" == "true") {
@@ -39,9 +44,9 @@ let
       settings = settings // env.withPgLogging;
       initialScript = sampleDb;
   };
-  postgrest = if env.pgrstUseDevel
-    then pkgs.callPackage ./postgrest/postgrest-devel.nix {}
-    else pkgs.callPackage ./postgrest/postgrest.nix {};
+  postgrest = pkgs.callPackage ./postgrest/postgrest.nix {
+    inherit (env) postgrestBin;
+  };
 in {
   network.storage.legacy = {
     databasefile = "~/.deployments.nixops";

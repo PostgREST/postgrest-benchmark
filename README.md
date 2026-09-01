@@ -191,6 +191,15 @@ export PGRSTBENCH_PGRST_INSTANCE_TYPE="t3a.xlarge"
 postgrest-bench-deploy
 ```
 
+### Custom PostgREST binary
+
+A stable PostgREST version is used by default. To deploy a development binary instead, set `PGRSTBENCH_POSTGREST_BIN` before deploying:
+
+```
+$ export PGRSTBENCH_POSTGREST_BIN="your/bin/postgrest-new"
+$ postgrest-bench-deploy
+```
+
 ## Limitations
 
 - The instances tested for this benchmark are the `t3a` series and the `m5a` series.
