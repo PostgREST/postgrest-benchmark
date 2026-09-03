@@ -154,8 +154,6 @@ in {
           db-anon-role = "postgres"
           db-use-legacy-gucs = false
           db-pool = ${builtins.toString (builtins.getAttr config.deployment.ec2.instanceType (import ./clientPool.nix))}
-          log-level = "warn"
-          jwt-allowed-skew-seconds = 1
           ${
             if env.pgrstJWTCacheEnabled
               then ""
