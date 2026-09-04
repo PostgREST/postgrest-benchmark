@@ -77,7 +77,7 @@ let
         set -euo pipefail
 
         for instance in 't3a.nano' 't3a.xlarge' 't3a.2xlarge' 'm5a.4xlarge' 'm5a.8xlarge'; do
-          export PGRSTBENCH_EC2_INSTANCE_TYPE="$instance"
+          export PGRSTBENCH_EC2_PGRST_INSTANCE_TYPE="$instance"
 
           if [ -z "$PGRSTBENCH_EC2_CLIENT_INSTANCE_TYPE" ]; then
             echo -e "\nUsing a $instance EC2 type for pgrst and client instances\n"
@@ -149,7 +149,7 @@ pkgs.mkShell {
     export PGRSTBENCH_WITH_UNIX_SOCKET="true"
     export PGRSTBENCH_SEPARATE_PG="true"
 
-    export PGRSTBENCH_EC2_INSTANCE_TYPE="t3a.nano"
+    export PGRSTBENCH_EC2_PGRST_INSTANCE_TYPE="t3a.nano"
     export PGRSTBENCH_EC2_CLIENT_INSTANCE_TYPE="m5a.8xlarge"
     export PGRSTBENCH_PG_LOGGING="false"
     export PGRSTBENCH_JWT_CACHE_ENABLED="true"

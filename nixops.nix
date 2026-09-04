@@ -14,7 +14,7 @@ let
     withMaxFds            = builtins.getEnv "PGRSTBENCH_MAX_FDS" == "true";
     withUnixSocket        = builtins.getEnv "PGRSTBENCH_WITH_UNIX_SOCKET" == "true";
     withSeparatePg        = builtins.getEnv "PGRSTBENCH_SEPARATE_PG" == "true";
-    ec2InstanceType       = builtins.getEnv "PGRSTBENCH_EC2_INSTANCE_TYPE";
+    ec2PgrstInstanceType  = builtins.getEnv "PGRSTBENCH_EC2_PGRST_INSTANCE_TYPE";
     ec2ClientInstanceType = builtins.getEnv "PGRSTBENCH_EC2_CLIENT_INSTANCE_TYPE";
     postgrestBin =
       let configuredBin = builtins.getEnv "PGRSTBENCH_POSTGREST_BIN";
@@ -114,9 +114,9 @@ in {
       ec2 = {
         inherit region accessKeyId;
         instanceType             =
-          if builtins.stringLength env.ec2InstanceType == 0
+          if builtins.stringLength env.ec2PgrstInstanceType == 0
           then "t3a.nano"
-          else env.ec2InstanceType;
+          else env.ec2PgrstInstanceType;
         associatePublicIpAddress = true;
         ebsInitialRootDiskSize   = 10;
         keyPair                  = resources.ec2KeyPairs.pgrstBenchKeyPair;
@@ -308,8 +308,6 @@ in {
         inherit region accessKeyId;
         instanceType             = if builtins.stringLength env.ec2ClientInstanceType != 0
                                      then env.ec2ClientInstanceType
-                                   else if builtins.stringLength env.ec2InstanceType != 0
-                                     then env.ec2InstanceType
                                    else
                                      "t3a.nano";
         associatePublicIpAddress = true;
