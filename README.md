@@ -185,8 +185,8 @@ postgrest-bench-deploy
 To change PostgreSQL and PostgREST EC2 instance types(both `t3a.nano` by default):
 
 ```bash
-export PGRSTBENCH_PG_INSTANCE_TYPE="t3a.xlarge"
-export PGRSTBENCH_PGRST_INSTANCE_TYPE="t3a.xlarge"
+export PGRSTBENCH_EC2_DB_INSTANCE_TYPE="t3a.xlarge"
+export PGRSTBENCH_EC2_PGRST_INSTANCE_TYPE="t3a.xlarge"
 
 postgrest-bench-deploy
 ```

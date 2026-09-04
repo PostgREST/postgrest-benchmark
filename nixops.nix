@@ -16,6 +16,7 @@ let
     withSeparatePg        = builtins.getEnv "PGRSTBENCH_SEPARATE_PG" == "true";
     ec2PgrstInstanceType  = builtins.getEnv "PGRSTBENCH_EC2_PGRST_INSTANCE_TYPE";
     ec2ClientInstanceType = builtins.getEnv "PGRSTBENCH_EC2_CLIENT_INSTANCE_TYPE";
+    ec2DbInstanceType     = builtins.getEnv "PGRSTBENCH_EC2_DB_INSTANCE_TYPE";
     postgrestBin =
       let configuredBin = builtins.getEnv "PGRSTBENCH_POSTGREST_BIN";
       in
@@ -338,7 +339,7 @@ in {
       targetEnv = "ec2";
       ec2 = {
         inherit region accessKeyId;
-        instanceType             = "m5a.8xlarge";
+        instanceType             = env.ec2DbInstanceType;
         associatePublicIpAddress = true;
         ebsInitialRootDiskSize   = 10;
         keyPair                  = resources.ec2KeyPairs.pgrstBenchKeyPair;
