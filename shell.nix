@@ -113,6 +113,36 @@ let
         done
       '';
 
+  executeVaryRTS =
+    pkgs.writeShellScriptBin (prefix + "-vary-rts")
+      ''
+        set -euo pipefail
+
+        for rts in \
+          default \
+          '-A32m -n2m' \
+          '-A64m -n4m' \
+          '-A128m -n8m' \
+          '-A256m -n8m' \
+          '-N16 -A64m -n4m' \
+          '-N32 -A128m -n8m' \
+          '-N32 -qn16 -A128m -n8m' \
+          '-N32 -qn16 -A256m -n8m' \
+          '-N32 -qb -A128m -n8m' \
+          '-N32 -qb -qn16 -A256m -n8m'; do
+          if [ "$rts" = default ]; then
+            rts=""
+          fi
+          export PGRSTBENCH_GHC_RTS="$rts"
+          echo -e "\nUsing RTS settings: $rts for pgrst\n"
+
+          ${prefix}-deploy
+
+          sleep 2s # TODO: sleep until pgrest establishes a connection to pg, this should be handled in a k6 setup
+          $@
+        done
+      '';
+
   ssh =
     pkgs.writeShellScriptBin (prefix + "-ssh")
       ''
@@ -160,6 +190,7 @@ pkgs.mkShell {
     pgbenchK6Varied
     executeVaryInstances
     executeVaryHighInstances
+    executeVaryRTS
     generateNixOSAMIFile
   ];
   shellHook = ''
