@@ -91,6 +91,28 @@ let
           $@
         done
       '';
+
+  executeVaryHighInstances =
+    pkgs.writeShellScriptBin (prefix + "-vary-high-instances")
+      ''
+        set -euo pipefail
+
+        for instance in 'm5a.8xlarge' 'm5a.12xlarge' 'm5a.16xlarge'; do
+          export PGRSTBENCH_EC2_PGRST_INSTANCE_TYPE="$instance"
+
+          if [ -z "$PGRSTBENCH_EC2_CLIENT_INSTANCE_TYPE" ]; then
+            echo -e "\nUsing a $instance EC2 type for pgrst and client instances\n"
+          else
+            echo -e "\nUsing a $instance EC2 type for pgrst\n"
+          fi
+
+          ${prefix}-deploy
+
+          sleep 2s # TODO: sleep until pgrest establishes a connection to pg, this should be handled in a k6 setup
+          $@
+        done
+      '';
+
   ssh =
     pkgs.writeShellScriptBin (prefix + "-ssh")
       ''
@@ -137,6 +159,7 @@ pkgs.mkShell {
     clientPgBench
     pgbenchK6Varied
     executeVaryInstances
+    executeVaryHighInstances
     generateNixOSAMIFile
   ];
   shellHook = ''
@@ -150,7 +173,7 @@ pkgs.mkShell {
     export PGRSTBENCH_SEPARATE_PG="true"
 
     export PGRSTBENCH_GHC_RTS=""
-    export PGRSTBENCH_EC2_PGRST_INSTANCE_TYPE="t3a.nano"
+    export PGRSTBENCH_EC2_PGRST_INSTANCE_TYPE="m5a.8xlarge"
     export PGRSTBENCH_EC2_DB_INSTANCE_TYPE="m5a.8xlarge"
     export PGRSTBENCH_EC2_CLIENT_INSTANCE_TYPE="m5a.8xlarge"
     export PGRSTBENCH_PG_LOGGING="false"
