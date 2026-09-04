@@ -149,6 +149,7 @@ pkgs.mkShell {
     export PGRSTBENCH_WITH_UNIX_SOCKET="true"
     export PGRSTBENCH_SEPARATE_PG="true"
 
+    export PGRSTBENCH_GHC_RTS=""
     export PGRSTBENCH_EC2_PGRST_INSTANCE_TYPE="t3a.nano"
     export PGRSTBENCH_EC2_DB_INSTANCE_TYPE="m5a.8xlarge"
     export PGRSTBENCH_EC2_CLIENT_INSTANCE_TYPE="m5a.8xlarge"

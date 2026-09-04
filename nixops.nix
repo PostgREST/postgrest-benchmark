@@ -14,6 +14,7 @@ let
     withMaxFds            = builtins.getEnv "PGRSTBENCH_MAX_FDS" == "true";
     withUnixSocket        = builtins.getEnv "PGRSTBENCH_WITH_UNIX_SOCKET" == "true";
     withSeparatePg        = builtins.getEnv "PGRSTBENCH_SEPARATE_PG" == "true";
+    ghcRts                = builtins.getEnv "PGRSTBENCH_GHC_RTS";
     ec2PgrstInstanceType  = builtins.getEnv "PGRSTBENCH_EC2_PGRST_INSTANCE_TYPE";
     ec2ClientInstanceType = builtins.getEnv "PGRSTBENCH_EC2_CLIENT_INSTANCE_TYPE";
     ec2DbInstanceType     = builtins.getEnv "PGRSTBENCH_EC2_DB_INSTANCE_TYPE";
@@ -187,7 +188,7 @@ in {
         after       = [ "postgresql.service" ];
         wantedBy    = [ "multi-user.target" ];
         serviceConfig = {
-          ExecStart = "${postgrest}/bin/postgrest ${pgrstConf}";
+          ExecStart = "${postgrest}/bin/postgrest ${pgrstConf} +RTS ${env.ghcRts} -RTS";
           Restart = "always";
         } // pkgs.lib.optionalAttrs (env.withMaxFds) {
           LimitNOFILE = maxFileDescriptors;
