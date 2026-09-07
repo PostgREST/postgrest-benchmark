@@ -191,12 +191,19 @@ export PGRSTBENCH_EC2_PGRST_INSTANCE_TYPE="t3a.xlarge"
 postgrest-bench-deploy
 ```
 
-### Custom PostgREST binary
+### PostgREST version or custom binary
 
-A stable PostgREST version is used by default. To deploy a development binary instead, set `PGRSTBENCH_POSTGREST_BIN` before deploying:
+A stable PostgREST version (`v14.17`) is used by default. Set `PGRSTBENCH_PGRST_VER` to either a supported version or a custom binary path:
 
 ```
-$ export PGRSTBENCH_POSTGREST_BIN="your/bin/postgrest-new"
+$ export PGRSTBENCH_PGRST_VER="v16.2"
+$ postgrest-bench-deploy
+```
+
+For a development binary:
+
+```
+$ export PGRSTBENCH_PGRST_VER="your/bin/postgrest-new"
 $ postgrest-bench-deploy
 ```
 

@@ -19,11 +19,17 @@ let
     ec2ClientInstanceType = builtins.getEnv "PGRSTBENCH_EC2_CLIENT_INSTANCE_TYPE";
     ec2DbInstanceType     = builtins.getEnv "PGRSTBENCH_EC2_DB_INSTANCE_TYPE";
     postgrestBin =
-      let configuredBin = builtins.getEnv "PGRSTBENCH_POSTGREST_BIN";
+      let configuredValue = builtins.getEnv "PGRSTBENCH_PGRST_VER";
       in
-        if configuredBin == ""
+        if configuredValue == "" || builtins.match "v[0-9]+\\.[0-9]+" configuredValue != null
         then ""
-        else /. + configuredBin;
+        else /. + configuredValue;
+    postgrestVer =
+      let configuredValue = builtins.getEnv "PGRSTBENCH_PGRST_VER";
+      in
+        if builtins.match "v[0-9]+\\.[0-9]+" configuredValue != null
+        then configuredValue
+        else "";
     pgrstJWTCacheEnabled  = builtins.getEnv "PGRSTBENCH_JWT_CACHE_ENABLED" == "true";
     withPgLogging     =
       pkgs.lib.optionalAttrs (builtins.getEnv "PGRSTBENCH_PG_LOGGING" == "true") {
@@ -47,7 +53,7 @@ let
       initialScript = sampleDb;
   };
   postgrest = pkgs.callPackage ./postgrest/postgrest.nix {
-    inherit (env) postgrestBin;
+    inherit (env) postgrestBin postgrestVer;
   };
 in {
   network.storage.legacy = {
