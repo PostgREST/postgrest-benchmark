@@ -26,6 +26,7 @@ in
 stdenv.mkDerivation rec {
   name = if usePostgrestBin then "postgrest-devel" else "postgrest";
   version = if usePostgrestBin then "devel" else selectedVersion;
+  passthru = { inherit versions; };
   src = if usePostgrestBin then postgrestBin else fetchurl {
     url = "https://github.com/PostgREST/postgrest/releases/download/${version}/postgrest-${version}-linux-static-x86-64.tar.xz";
     sha256 = versions.${selectedVersion};

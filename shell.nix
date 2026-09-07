@@ -7,6 +7,8 @@ let
   pkgs = import nixpkgs {};
   global = import ./global.nix;
   prefix = global.prefix;
+  postgrest = pkgs.callPackage ./postgrest/postgrest.nix {};
+  postgrestVersions = pkgs.lib.sort pkgs.lib.versionOlder (builtins.attrNames postgrest.versions);
   deploy =
     pkgs.writeShellScriptBin (prefix + "-deploy")
       ''
@@ -143,6 +145,22 @@ let
         done
       '';
 
+  executeVaryPostgrestVersions =
+    pkgs.writeShellScriptBin (prefix + "-vary-pgrst")
+      ''
+        set -euo pipefail
+
+        for version in ${pkgs.lib.concatStringsSep " " (map pkgs.lib.escapeShellArg postgrestVersions)}; do
+          export PGRSTBENCH_PGRST_VER="$version"
+          echo -e "\nUsing PostgREST $version\n"
+
+          ${prefix}-deploy
+
+          sleep 2s # TODO: sleep until postgREST establishes a connection to pg
+          "$@"
+        done
+      '';
+
   ssh =
     pkgs.writeShellScriptBin (prefix + "-ssh")
       ''
@@ -191,6 +209,7 @@ pkgs.mkShell {
     executeVaryInstances
     executeVaryHighInstances
     executeVaryRTS
+    executeVaryPostgrestVersions
     generateNixOSAMIFile
   ];
   shellHook = ''
