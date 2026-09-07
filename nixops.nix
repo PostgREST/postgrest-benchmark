@@ -21,13 +21,13 @@ let
     postgrestBin =
       let configuredValue = builtins.getEnv "PGRSTBENCH_PGRST_VER";
       in
-        if configuredValue == "" || builtins.match "v[0-9]+\\.[0-9]+" configuredValue != null
+        if configuredValue == "" || builtins.match "v[0-9]+\\.[0-9]+(\\.[0-9]+)?" configuredValue != null
         then ""
         else /. + configuredValue;
     postgrestVer =
       let configuredValue = builtins.getEnv "PGRSTBENCH_PGRST_VER";
       in
-        if builtins.match "v[0-9]+\\.[0-9]+" configuredValue != null
+        if builtins.match "v[0-9]+\\.[0-9]+(\\.[0-9]+)?" configuredValue != null
         then configuredValue
         else "";
     pgrstJWTCacheEnabled  = builtins.getEnv "PGRSTBENCH_JWT_CACHE_ENABLED" == "true";
