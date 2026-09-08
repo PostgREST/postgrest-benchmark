@@ -40,12 +40,13 @@ let
         set -euo pipefail
 
         echo -e "\nRunning k6 with $1 vus" >&2
-        nixops ssh -d ${prefix} client k6 run -q \
+        # we concat this utils file because we can't import it as regular since it's not on the remote instance
+        { cat k6/private/utils.js; cat "$2"; } | nixops ssh -d ${prefix} client k6 run -q \
           --env POSTGREST_VERSION="''${PGRSTBENCH_PGRST_VER:-}" \
           --env PGRSTBENCH_EC2_PGRST_INSTANCE_TYPE="''${PGRSTBENCH_EC2_PGRST_INSTANCE_TYPE:-}" \
           --env PGRSTBENCH_GHC_RTS="''${PGRSTBENCH_GHC_RTS:-}" \
           --duration ''${3:-${builtins.toString global.durationSeconds}s} \
-          --vus $1 - < $2
+          --vus $1 -
       '';
   k6VariedVus =
     pkgs.writeShellScriptBin (prefix + "-k6-vary-vus")

@@ -1,8 +1,6 @@
 import http from 'k6/http'
 import { Rate } from 'k6/metrics'
 
-const URL = "http://pgrst";
-
 export const options = {
   thresholds: {
     'failed requests': ['rate<0.1'],
