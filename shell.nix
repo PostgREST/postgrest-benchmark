@@ -38,8 +38,11 @@ let
       ''
         set -euo pipefail
 
-        echo -e "\nRunning k6 with $1 vus"
+        echo -e "\nRunning k6 with $1 vus" >&2
         nixops ssh -d ${prefix} client k6 run -q \
+          --env POSTGREST_VERSION="''${PGRSTBENCH_PGRST_VER:-}" \
+          --env PGRSTBENCH_EC2_PGRST_INSTANCE_TYPE="''${PGRSTBENCH_EC2_PGRST_INSTANCE_TYPE:-}" \
+          --env PGRSTBENCH_GHC_RTS="''${PGRSTBENCH_GHC_RTS:-}" \
           --duration ''${3:-${builtins.toString global.durationSeconds}s} \
           --vus $1 - < $2
       '';
@@ -49,7 +52,6 @@ let
         set -euo pipefail
 
         for i in '10' '50' '100'; do
-          echo -e "\n"
           ${prefix}-k6 $i $1
         done
       '';
@@ -152,9 +154,9 @@ let
 
         for version in ${pkgs.lib.concatStringsSep " " (map pkgs.lib.escapeShellArg postgrestVersions)}; do
           export PGRSTBENCH_PGRST_VER="$version"
-          echo -e "\nUsing PostgREST $version\n"
+          echo -e "\nUsing PostgREST $version\n" >&2
 
-          ${prefix}-deploy
+          ${prefix}-deploy >&2
 
           sleep 2s # TODO: sleep until postgREST establishes a connection to pg
           "$@"

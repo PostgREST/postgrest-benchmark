@@ -58,6 +58,16 @@ export const options = {
   }
 };
 
+export function handleSummary(data) {
+  data.POSTGREST_VERSION = __ENV.POSTGREST_VERSION || null;
+  data.PGRSTBENCH_EC2_PGRST_INSTANCE_TYPE = __ENV.PGRSTBENCH_EC2_PGRST_INSTANCE_TYPE || null;
+  data.PGRSTBENCH_GHC_RTS = __ENV.PGRSTBENCH_GHC_RTS || null;
+
+  return {
+    stdout: JSON.stringify(data) + '\n'
+  };
+}
+
 export default function() {
   const params = {
     headers: {
