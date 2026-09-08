@@ -5,6 +5,7 @@ let
     sha256 = "sha256:1lr1h35prqkd1mkmzriwlpvxcb34kmhc9dnr48gkm8hh089hifmx";
   };
   pkgs = import nixpkgs {};
+  python = pkgs.python3.withPackages (ps: [ ps.pandas ps.matplotlib ps.tabulate ]);
   global = import ./global.nix;
   prefix = global.prefix;
   postgrest = pkgs.callPackage ./postgrest/postgrest.nix {};
@@ -199,6 +200,7 @@ let
 in
 pkgs.mkShell {
   buildInputs = [
+    python
     (pkgs.nixops_unstable_minimal.withPlugins (ps: [ ps.nixops-aws ]))
     deploy
     info

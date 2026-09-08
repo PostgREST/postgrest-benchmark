@@ -2,3 +2,5 @@
 old
 .deployment.nixops*
 .history
+results/*
+__pycache__
