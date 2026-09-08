@@ -42,6 +42,7 @@ let
         echo -e "\nRunning k6 with $1 vus" >&2
         # we concat this utils file because we can't import it as regular since it's not on the remote instance
         { cat k6/private/utils.js; cat "$2"; } | nixops ssh -d ${prefix} client k6 run -q \
+          --env K6_SCRIPT="$2" \
           --env POSTGREST_VERSION="''${PGRSTBENCH_PGRST_VER:-}" \
           --env PGRSTBENCH_EC2_PGRST_INSTANCE_TYPE="''${PGRSTBENCH_EC2_PGRST_INSTANCE_TYPE:-}" \
           --env PGRSTBENCH_GHC_RTS="''${PGRSTBENCH_GHC_RTS:-}" \

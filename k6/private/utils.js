@@ -41,6 +41,7 @@ function generateJWT({ unique = false, iat = Math.floor(Date.now() / 1000) } = {
 }
 
 function handleSummary(data) {
+  data.K6_SCRIPT = __ENV.K6_SCRIPT || null;
   data.POSTGREST_VERSION = __ENV.POSTGREST_VERSION || null;
   data.PGRSTBENCH_EC2_PGRST_INSTANCE_TYPE =
     __ENV.PGRSTBENCH_EC2_PGRST_INSTANCE_TYPE || null;
