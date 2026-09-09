@@ -1,4 +1,3 @@
-import { Rate, Gauge } from "k6/metrics";
 import { check, group, sleep } from 'k6';
 import http from 'k6/http';
 
@@ -7,8 +6,6 @@ export const options = {
     'http_req_failed': ['rate<0.1'],
   }
 };
-
-const myFailRate = new Rate('http_req_failed');
 
 export default function() {
   let body = JSON.stringify(Array(20).fill({
@@ -28,8 +25,7 @@ export default function() {
   , fax:         '+1 (403) 246-9899'
   , email:       'vu' + __ITER + '@chinookcorp.com'
   }));
-  let res = http.post(URL + "/employee?columns=employee_id,first_name,last_name,title,reports_to,birth_date,hire_date,address,city,state,country,postal_code,phone,fax,email", body, {headers: { 'Content-Type': 'application/json' }});
-  myFailRate.add(res.status !== 201);
+  http.post(URL + "/employee?columns=employee_id,first_name,last_name,title,reports_to,birth_date,hire_date,address,city,state,country,postal_code,phone,fax,email", body, {headers: { 'Content-Type': 'application/json' }});
 }
 
 export function teardown(data) {
