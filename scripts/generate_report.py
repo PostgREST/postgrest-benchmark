@@ -1,7 +1,6 @@
 import argparse
 import json
 import re
-import sys
 from pathlib import Path
 
 import matplotlib
@@ -10,27 +9,32 @@ import pandas as pd
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
+RESULTS_DIR = Path("results")
+
 
 def version_key(version):
     return tuple(int(part) for part in re.findall(r"\d+", version))
 
 
-def read_results():
+def read_results(path):
     rows = []
-    for line in sys.stdin:
-        if not line.strip():
-            continue
-        record = json.loads(line)
-        metrics = record["metrics"]
-        duration = metrics["http_req_duration"]["values"]
-        rows.append({
-            "Version": record.get("POSTGREST_VERSION"),
-            "VUs": int(metrics.get("vus_max", metrics["vus"])["values"]["max"]),
-            "http_reqs (req/s)": metrics["http_reqs"]["values"]["rate"],
-            "p50": duration["med"],
-            "p90": duration["p(90)"],
-            "p95": duration["p(95)"],
-        })
+    with path.open() as input_file:
+        for line in input_file:
+            if not line.strip():
+                continue
+            record = json.loads(line)
+            metrics = record["metrics"]
+            duration = metrics["http_req_duration"]["values"]
+            rows.append({
+                "Version": record.get("POSTGREST_VERSION"),
+                "K6 script": record.get("K6_SCRIPT"),
+                "EC2": record.get("PGRSTBENCH_EC2_PGRST_INSTANCE_TYPE"),
+                "VUs": int(metrics.get("vus_max", metrics["vus"])["values"]["max"]),
+                "http_reqs (req/s)": metrics["http_reqs"]["values"]["rate"],
+                "p50": duration["med"],
+                "p90": duration["p(90)"],
+                "p95": duration["p(95)"],
+            })
     return pd.DataFrame(rows)
 
 
@@ -70,14 +74,14 @@ def write_svg(data, path):
 
 def main():
     parser = argparse.ArgumentParser(description="Generate reports from k6 JSONL summaries")
-    parser.add_argument("--svg", type=Path, default=Path("results/report.svg"))
-    parser.add_argument("--markdown", type=Path, default=Path("results/report.md"))
+    parser.add_argument("input", type=Path, help="Input JSONL file")
     args = parser.parse_args()
-    data = read_results()
+    data = read_results(args.input)
     if data.empty:
         raise SystemExit("empty input")
-    write_svg(data, args.svg)
-    write_markdown(data, args.markdown)
+    RESULTS_DIR.mkdir(exist_ok=True)
+    write_svg(data, RESULTS_DIR / f"{args.input.stem}.svg")
+    write_markdown(data, RESULTS_DIR / f"{args.input.stem}.md")
 
 
 if __name__ == "__main__":
