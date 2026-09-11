@@ -63,6 +63,9 @@ def write_svg(data, path):
     ]
     colors = {10: "tab:blue", 50: "tab:orange", 100: "tab:green"}
     figure, axes = plt.subplots(4, 1, figsize=(18, 15), sharex=True)
+    script = data["K6 script"].iloc[0]
+    instances = ", ".join(sorted(data["EC2"].dropna().unique()))
+    figure.suptitle(f"K6 script: {script} | EC2 instance: {instances}")
     for axis, (title, column) in zip(axes, panels):
         for vus, group in data.groupby("VUs", sort=True):
             axis.plot(
@@ -76,7 +79,7 @@ def write_svg(data, path):
         axis.grid(axis="y", color="lightgray")
         axis.legend(loc="best")
     axes[-1].tick_params(axis="x", rotation=60)
-    figure.tight_layout()
+    figure.tight_layout(rect=(0, 0, 1, 0.97))
     figure.savefig(path, format="svg")
     plt.close(figure)
 
@@ -91,11 +94,13 @@ def main():
     if data.empty:
         raise SystemExit("empty input")
     RESULTS_DIR.mkdir(exist_ok=True)
-    svg_path = RESULTS_DIR / f"{args.input.stem}.svg"
     markdown_path = RESULTS_DIR / f"{args.input.stem}.md"
-    write_svg(data, svg_path)
+    for script, script_data in data.groupby("K6 script", dropna=False):
+        script_stem = Path(str(script)).stem
+        svg_path = RESULTS_DIR / f"{script_stem}.svg"
+        write_svg(script_data, svg_path)
+        print(f"Generated report: {svg_path}")
     write_markdown(data, markdown_path)
-    print(f"Generated report: {svg_path}")
     print(f"Generated report: {markdown_path}")
 
 
