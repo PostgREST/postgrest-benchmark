@@ -67,7 +67,7 @@ let
         set -euo pipefail
 
         for i in '10' '50' '100'; do
-          ${prefix}-k6 $i ${builtins.toString global.durationSeconds}s $1
+          ${prefix}-k6 $i $@
         done
       '';
   clientPgBench =
