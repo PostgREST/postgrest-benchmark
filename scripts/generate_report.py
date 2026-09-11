@@ -23,6 +23,7 @@ def read_results(path):
             record = json.loads(line)
             metrics = record["metrics"]
             duration = metrics["http_req_duration"]["values"]
+            failed = metrics.get("http_req_failed", {}).get("values", {})
             rows.append({
                 "Version": record.get("POSTGREST_VERSION"),
                 "K6 script": record.get("K6_SCRIPT"),
@@ -31,6 +32,7 @@ def read_results(path):
                     metrics.get("vus_max", metrics["vus"])["values"]["max"]
                 ),
                 "http_reqs (req/s)": metrics["http_reqs"]["values"]["rate"],
+                "failed requests": failed.get("passes", 0),
                 "p50": duration["med"],
                 "p90": duration["p(90)"],
                 "p95": duration["p(95)"],
@@ -60,12 +62,13 @@ def write_svg(data, path):
     data = data.sort_values(["_version", "VUs"])
     panels = [
         ("http_reqs (requests/second)", "http_reqs (req/s)"),
+        ("failed requests", "failed requests"),
         ("p50 latency", "p50"),
         ("p90 latency", "p90"),
         ("p95 latency", "p95"),
     ]
     colors = {10: "tab:blue", 50: "tab:orange", 100: "tab:green"}
-    figure, axes = plt.subplots(4, 1, figsize=(18, 15), sharex=True)
+    figure, axes = plt.subplots(5, 1, figsize=(18, 18), sharex=True)
     script = data["K6 script"].iloc[0]
     instances = ", ".join(sorted(data["EC2"].dropna().unique()))
     duration = math.floor(data["Duration"].iloc[0] / 1000)
@@ -83,6 +86,9 @@ def write_svg(data, path):
                 color=colors.get(vus),
             )
         axis.set_title(title)
+        # TODO some charts were showing negative labels
+        if column == "failed requests":
+            axis.set_ylim(bottom=0)
         axis.grid(axis="y", color="lightgray")
         axis.legend(loc="best")
     axes[-1].tick_params(axis="x", rotation=60)
