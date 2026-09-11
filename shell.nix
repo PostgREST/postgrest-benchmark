@@ -211,6 +211,12 @@ let
 
         echo "Wrote result to ${global.nixosAMIFile}"
       '';
+  generateReport =
+    pkgs.writers.writePython3Bin (prefix + "-generate-report") {
+      libraries = with pkgs.python3Packages; [ matplotlib pandas tabulate ];
+    }
+    (builtins.readFile ./scripts/generate_report.py);
+
 in
 pkgs.mkShell {
   buildInputs = [
@@ -224,6 +230,7 @@ pkgs.mkShell {
     destroy
     clientPgBench
     pgbenchK6Varied
+    generateReport
     executeVaryInstances
     executeVaryHighInstances
     executeVaryRTS
