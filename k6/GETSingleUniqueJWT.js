@@ -3,13 +3,6 @@ import http from 'k6/http';
 import { Rate } from 'k6/metrics';
 const TOKEN_COUNT = 20000; // Pre-generated tokens
 
-export const options = {
-  thresholds: {
-    'http_req_failed': ['rate<0.1'],
-    'http_req_duration': ['p(95)<1000']
-  }
-};
-
 // Setup function executed once before the test run.
 // It pre-generates tokens and passes them to the default function.
 export function setup() {

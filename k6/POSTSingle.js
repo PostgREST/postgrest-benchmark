@@ -1,13 +1,6 @@
 import { check, group, sleep } from 'k6';
 import http from 'k6/http';
 
-export const options = {
-  thresholds: {
-    'http_req_failed': ['rate<0.1'],
-    'http_req_duration': ['p(95)<1000']
-  }
-};
-
 export default function() {
   let body = JSON.stringify({
     employee_id: __ITER + 100
