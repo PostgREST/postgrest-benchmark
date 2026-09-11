@@ -1,5 +1,6 @@
 import argparse
 import json
+import math
 import re
 from pathlib import Path
 
@@ -33,6 +34,7 @@ def read_results(path):
                 "p50": duration["med"],
                 "p90": duration["p(90)"],
                 "p95": duration["p(95)"],
+                "Duration": record["state"]["testRunDurationMs"],
             })
     return pd.DataFrame(rows)
 
@@ -42,6 +44,7 @@ def write_markdown(data, path):
     table["http_reqs (req/s)"] = table["http_reqs (req/s)"].map(
         lambda value: f"{value:.6f}"
     )
+    table["Duration"] = table["Duration"].map(lambda value: f"{value}ms")
     for column in ("p50", "p90", "p95"):
         table[column] = table[column].map(lambda value: f"{value:.2f}ms")
     path.write_text(
@@ -65,7 +68,11 @@ def write_svg(data, path):
     figure, axes = plt.subplots(4, 1, figsize=(18, 15), sharex=True)
     script = data["K6 script"].iloc[0]
     instances = ", ".join(sorted(data["EC2"].dropna().unique()))
-    figure.suptitle(f"K6 script: {script} | EC2 instance: {instances}")
+    duration = math.floor(data["Duration"].iloc[0] / 1000)
+    figure.suptitle(
+        f"K6 script: {script} | EC2 instance: {instances} | "
+        f"Duration: {duration}s"
+    )
     for axis, (title, column) in zip(axes, panels):
         for vus, group in data.groupby("VUs", sort=True):
             axis.plot(
