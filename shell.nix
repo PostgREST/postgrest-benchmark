@@ -39,15 +39,27 @@ let
       ''
         set -euo pipefail
 
-        echo -e "\nRunning k6 with $1 vus" >&2
-        # we concat this utils file because we can't import it as regular since it's not on the remote instance
-        { cat k6/private/utils.js; cat "$2"; } | nixops ssh -d ${prefix} client k6 run -q \
-          --env K6_SCRIPT="$2" \
-          --env POSTGREST_VERSION="''${PGRSTBENCH_PGRST_VER:-}" \
-          --env PGRSTBENCH_EC2_PGRST_INSTANCE_TYPE="''${PGRSTBENCH_EC2_PGRST_INSTANCE_TYPE:-}" \
-          --env PGRSTBENCH_GHC_RTS="''${PGRSTBENCH_GHC_RTS:-}" \
-          --duration ''${3:-${builtins.toString global.durationSeconds}s} \
-          --vus $1 -
+        if [ "$#" -lt 3 ]; then
+          echo "usage: ${prefix}-k6 VUS DURATION SCRIPT..." >&2
+          exit 1
+        fi
+
+        vus=$1
+        duration=$2
+        shift 2
+
+        for script do
+          [ -f "$script" ] || continue
+          echo -e "\nRunning k6 with $vus vus for $duration: $script" >&2
+          # we concat this utils file because we can't import it as regular since it's not on the remote instance
+          { cat k6/private/utils.js; cat "$script"; } | nixops ssh -d ${prefix} client k6 run -q \
+            --env K6_SCRIPT="$script" \
+            --env POSTGREST_VERSION="''${PGRSTBENCH_PGRST_VER:-}" \
+            --env PGRSTBENCH_EC2_PGRST_INSTANCE_TYPE="''${PGRSTBENCH_EC2_PGRST_INSTANCE_TYPE:-}" \
+            --env PGRSTBENCH_GHC_RTS="''${PGRSTBENCH_GHC_RTS:-}" \
+            --duration "$duration" \
+            --vus "$vus" -
+        done
       '';
   k6VariedVus =
     pkgs.writeShellScriptBin (prefix + "-k6-vary-vus")
@@ -55,7 +67,7 @@ let
         set -euo pipefail
 
         for i in '10' '50' '100'; do
-          ${prefix}-k6 $i $1
+          ${prefix}-k6 $i ${builtins.toString global.durationSeconds}s $1
         done
       '';
   clientPgBench =

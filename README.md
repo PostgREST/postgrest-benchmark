@@ -47,7 +47,7 @@ pgrstbench> deployment finished successfully
 Run a `k6` test on the client instance and get the output:
 
 ```
-$ postgrest-bench-k6 20 k6/GETSingle.js
+$ postgrest-bench-k6 20 10s k6/GETSingle.js
 ```
 
 Destroy all the setup and the AWS instances:
@@ -97,7 +97,14 @@ K6 runs on the client instance, but you can get the output of the load test on y
 
 ```
 ## k6 will run with 10 VUs on the AWS client instance and load test the t3anano instance with the local k6/GETSingle.js script
-$ postgrest-bench-k6 20 k6/GETSingle.js
+$ postgrest-bench-k6 20 10s k6/GETSingle.js
+
+Multiple scripts can be supplied; each script runs sequentially for the specified duration:
+
+```
+$ postgrest-bench-k6 20 10s k6/*
+$ postgrest-bench-k6 20 10s k6/{GETSingle.js,GETSingleJWT.js}
+```
 
 ## You will see the k6 logo and runs here
 ```
