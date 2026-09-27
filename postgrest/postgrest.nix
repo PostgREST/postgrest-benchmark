@@ -33,6 +33,8 @@ let
     "v16.0" = "sha256-kMkzxhPc9ci8JlWpRlOd539SkgkUtwyiIA0oXmRoOj4=";
     "v16.1" = "sha256-uYbJJs8WocXZeVTFfTpu3YlKXaIlw/P8DCXcQQUAndc=";
     "v16.2" = "sha256-RxJZW6rg9dhKUn1VoRFm1r9Nmw8dECUFxenVkhl4fwg=";
+    "v16.3" = "sha256-TrQU65SMiACGPMjJiWoXthGy3M+f9YH01X9C7JzO5A0=";
+    "v16.4" = "sha256-tH7Mgvzh3Ou7xBg9g55S8H92MMnXrQ9U23U9GTkpk1Q=";
   };
   selectedVersion = if postgrestVer == "" then "v14.17" else postgrestVer;
 in
