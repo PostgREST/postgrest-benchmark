@@ -1,0 +1,74 @@
+| Version        | K6 script                | EC2         | GHC RTS   | Extra config            |   VUs |   http_reqs (req/s) |   failed requests | p50      | p90      | p95      | Duration       |
+|:---------------|:-------------------------|:------------|:----------|:------------------------|------:|--------------------:|------------------:|:---------|:---------|:---------|:---------------|
+| v16.4          | k6/GETAllEmbed.js        | m5a.8xlarge |           |                         |    10 |             127.288 |                 0 | 76.86ms  | 82.20ms  | 89.13ms  | 60060.652525ms |
+| v16.4          | k6/GETSingleEmbed.js     | m5a.8xlarge |           |                         |    10 |            4298.11  |                 0 | 2.02ms   | 2.88ms   | 3.51ms   | 60002.249293ms |
+| v16.4          | k6/GETSingle.js          | m5a.8xlarge |           |                         |    10 |            5297.49  |                 0 | 1.72ms   | 1.97ms   | 2.14ms   | 60001.627597ms |
+| v16.4          | k6/GETSingleJWT.js       | m5a.8xlarge |           |                         |    10 |            4954.64  |                 0 | 1.77ms   | 2.00ms   | 2.20ms   | 60001.775794ms |
+| v16.4          | k6/GETSingleUniqueJWT.js | m5a.8xlarge |           |                         |    10 |            4746.66  |              1769 | 1.84ms   | 2.09ms   | 2.26ms   | 61256.515045ms |
+| v16.4          | k6/OPTIONSUniqueJWT.js   | m5a.8xlarge |           |                         |    10 |           15380.7   |                 0 | 0.51ms   | 0.61ms   | 0.64ms   | 61251.736064ms |
+| v16.4          | k6/PATCHSingle.js        | m5a.8xlarge |           |                         |    10 |            2823.7   |                 0 | 3.10ms   | 4.03ms   | 4.15ms   | 60004.698468ms |
+| v16.4          | k6/POSTBulk.js           | m5a.8xlarge |           |                         |    10 |            1953.17  |                 0 | 4.11ms   | 4.75ms   | 5.20ms   | 64482.238019ms |
+| v16.4          | k6/POSTSingle.js         | m5a.8xlarge |           |                         |    10 |            2756.34  |                 0 | 3.34ms   | 4.02ms   | 4.12ms   | 60343.827652ms |
+| v16.4          | k6/RPCGETSingleEmbed.js  | m5a.8xlarge |           |                         |    10 |            4108.63  |                 0 | 2.12ms   | 3.09ms   | 3.68ms   | 60001.78134ms  |
+| v16.4          | k6/RPCGETSingle.js       | m5a.8xlarge |           |                         |    10 |            5326.08  |                 0 | 1.72ms   | 1.93ms   | 2.11ms   | 60001.894328ms |
+| v16.4          | k6/RPCSimple.js          | m5a.8xlarge |           |                         |    10 |            5302.68  |                 0 | 1.73ms   | 1.94ms   | 2.11ms   | 60001.911907ms |
+| v16.4          | k6/GETAllEmbed.js        | m5a.8xlarge |           |                         |    50 |             322.738 |                 0 | 146.68ms | 208.22ms | 217.94ms | 60116.898935ms |
+| v16.4          | k6/GETSingleEmbed.js     | m5a.8xlarge |           |                         |    50 |            8646.24  |                 0 | 4.23ms   | 10.33ms  | 11.97ms  | 60004.461975ms |
+| v16.4          | k6/GETSingle.js          | m5a.8xlarge |           |                         |    50 |            7634.53  |                 0 | 6.46ms   | 10.99ms  | 12.44ms  | 60005.520494ms |
+| v16.4          | k6/GETSingleJWT.js       | m5a.8xlarge |           |                         |    50 |            7361.97  |                 0 | 6.58ms   | 11.12ms  | 12.62ms  | 60003.525802ms |
+| v16.4          | k6/GETSingleUniqueJWT.js | m5a.8xlarge |           |                         |    50 |            7128.17  |              3460 | 6.53ms   | 11.39ms  | 12.95ms  | 61245.165955ms |
+| v16.4          | k6/OPTIONSUniqueJWT.js   | m5a.8xlarge |           |                         |    50 |           49707.4   |                 0 | 0.73ms   | 1.04ms   | 1.23ms   | 61221.087682ms |
+| v16.4          | k6/PATCHSingle.js        | m5a.8xlarge |           |                         |    50 |            7172.98  |                 0 | 6.26ms   | 10.36ms  | 11.56ms  | 60005.220082ms |
+| v16.4          | k6/POSTBulk.js           | m5a.8xlarge |           |                         |    50 |            4051.6   |                 0 | 7.59ms   | 12.90ms  | 14.53ms  | 75383.986797ms |
+| v16.4          | k6/POSTSingle.js         | m5a.8xlarge |           |                         |    50 |            6493.19  |                 0 | 6.77ms   | 11.38ms  | 12.64ms  | 60881.356736ms |
+| v16.4          | k6/RPCGETSingleEmbed.js  | m5a.8xlarge |           |                         |    50 |            8067.06  |                 0 | 4.50ms   | 11.10ms  | 12.79ms  | 60003.761028ms |
+| v16.4          | k6/RPCGETSingle.js       | m5a.8xlarge |           |                         |    50 |            7875.85  |                 0 | 6.12ms   | 10.69ms  | 12.09ms  | 60006.486973ms |
+| v16.4          | k6/RPCSimple.js          | m5a.8xlarge |           |                         |    50 |            7756.59  |                 0 | 6.13ms   | 10.95ms  | 12.44ms  | 60005.377793ms |
+| v16.4          | k6/GETAllEmbed.js        | m5a.8xlarge |           |                         |   100 |             322.309 |                 0 | 303.55ms | 385.05ms | 402.70ms | 60203.115836ms |
+| v16.4          | k6/GETSingleEmbed.js     | m5a.8xlarge |           |                         |   100 |            8754.29  |                 0 | 8.57ms   | 20.89ms  | 24.04ms  | 60013.558722ms |
+| v16.4          | k6/GETSingle.js          | m5a.8xlarge |           |                         |   100 |            7590.38  |                 0 | 13.26ms  | 22.61ms  | 25.73ms  | 60014.253573ms |
+| v16.4          | k6/GETSingleJWT.js       | m5a.8xlarge |           |                         |   100 |            7421.6   |                 0 | 13.53ms  | 22.31ms  | 25.34ms  | 60010.089297ms |
+| v16.4          | k6/GETSingleUniqueJWT.js | m5a.8xlarge |           |                         |   100 |            6970.15  |              2815 | 14.09ms  | 23.52ms  | 26.95ms  | 61237.859128ms |
+| v16.4          | k6/OPTIONSUniqueJWT.js   | m5a.8xlarge |           |                         |   100 |           66987     |                 0 | 1.00ms   | 1.75ms   | 3.95ms   | 61231.512563ms |
+| v16.4          | k6/PATCHSingle.js        | m5a.8xlarge |           |                         |   100 |            6702.03  |                 0 | 14.52ms  | 23.46ms  | 26.34ms  | 60009.725631ms |
+| v16.4          | k6/POSTBulk.js           | m5a.8xlarge |           |                         |   100 |            4313.04  |                 0 | 17.28ms  | 28.77ms  | 36.76ms  | 71413.933323ms |
+| v16.4          | k6/POSTSingle.js         | m5a.8xlarge |           |                         |   100 |            6362.13  |                 0 | 14.54ms  | 24.80ms  | 27.92ms  | 62317.932418ms |
+| v16.4          | k6/RPCGETSingleEmbed.js  | m5a.8xlarge |           |                         |   100 |            7545.15  |                 0 | 13.58ms  | 21.68ms  | 24.85ms  | 60011.509691ms |
+| v16.4          | k6/RPCGETSingle.js       | m5a.8xlarge |           |                         |   100 |            7647.05  |                 0 | 13.21ms  | 22.28ms  | 25.33ms  | 60012.144008ms |
+| v16.4          | k6/RPCSimple.js          | m5a.8xlarge |           |                         |   100 |            7377.45  |                 0 | 13.78ms  | 23.04ms  | 26.28ms  | 60007.087229ms |
+| pipeline-pgrst | k6/GETAllEmbed.js        | m5a.8xlarge |           | db-pipeline-mode = true |    10 |             129.875 |                 0 | 76.21ms  | 79.75ms  | 81.56ms  | 60057.784965ms |
+| pipeline-pgrst | k6/GETSingleEmbed.js     | m5a.8xlarge |           | db-pipeline-mode = true |    10 |            5885.51  |                 0 | 1.38ms   | 2.22ms   | 2.96ms   | 60002.821438ms |
+| pipeline-pgrst | k6/GETSingle.js          | m5a.8xlarge |           | db-pipeline-mode = true |    10 |            7693.67  |                 0 | 1.12ms   | 1.37ms   | 1.57ms   | 60001.384423ms |
+| pipeline-pgrst | k6/GETSingleJWT.js       | m5a.8xlarge |           | db-pipeline-mode = true |    10 |            7046.82  |                 0 | 1.14ms   | 1.40ms   | 1.62ms   | 60001.366945ms |
+| pipeline-pgrst | k6/GETSingleUniqueJWT.js | m5a.8xlarge |           | db-pipeline-mode = true |    10 |            6669.38  |              2361 | 1.23ms   | 1.51ms   | 1.71ms   | 61267.577652ms |
+| pipeline-pgrst | k6/OPTIONSUniqueJWT.js   | m5a.8xlarge |           | db-pipeline-mode = true |    10 |           15432.4   |                 0 | 0.51ms   | 0.60ms   | 0.64ms   | 61253.534546ms |
+| pipeline-pgrst | k6/PATCHSingle.js        | m5a.8xlarge |           | db-pipeline-mode = true |    10 |            3172.69  |                 0 | 2.96ms   | 3.22ms   | 3.78ms   | 60003.432146ms |
+| pipeline-pgrst | k6/POSTBulk.js           | m5a.8xlarge |           | db-pipeline-mode = true |    10 |            2104.28  |                 0 | 3.96ms   | 4.61ms   | 4.91ms   | 64668.05156ms  |
+| pipeline-pgrst | k6/POSTSingle.js         | m5a.8xlarge |           | db-pipeline-mode = true |    10 |            3144.95  |                 0 | 2.94ms   | 3.25ms   | 3.58ms   | 60681.056383ms |
+| pipeline-pgrst | k6/RPCGETSingleEmbed.js  | m5a.8xlarge |           | db-pipeline-mode = true |    10 |            5452.66  |                 0 | 1.49ms   | 2.49ms   | 3.21ms   | 60003.607996ms |
+| pipeline-pgrst | k6/RPCGETSingle.js       | m5a.8xlarge |           | db-pipeline-mode = true |    10 |            7689.84  |                 0 | 1.12ms   | 1.37ms   | 1.55ms   | 60001.244491ms |
+| pipeline-pgrst | k6/RPCSimple.js          | m5a.8xlarge |           | db-pipeline-mode = true |    10 |            7650.53  |                 0 | 1.12ms   | 1.39ms   | 1.59ms   | 60002.368465ms |
+| pipeline-pgrst | k6/GETAllEmbed.js        | m5a.8xlarge |           | db-pipeline-mode = true |    50 |             326.425 |                 0 | 147.75ms | 201.05ms | 207.84ms | 60114.816126ms |
+| pipeline-pgrst | k6/GETSingleEmbed.js     | m5a.8xlarge |           | db-pipeline-mode = true |    50 |           11096.4   |                 0 | 2.59ms   | 10.42ms  | 12.86ms  | 60007.912549ms |
+| pipeline-pgrst | k6/GETSingle.js          | m5a.8xlarge |           | db-pipeline-mode = true |    50 |            9179.38  |                 0 | 2.43ms   | 12.37ms  | 14.57ms  | 60005.82095ms  |
+| pipeline-pgrst | k6/GETSingleJWT.js       | m5a.8xlarge |           | db-pipeline-mode = true |    50 |            8464.54  |                 0 | 2.76ms   | 12.88ms  | 15.13ms  | 60006.70691ms  |
+| pipeline-pgrst | k6/GETSingleUniqueJWT.js | m5a.8xlarge |           | db-pipeline-mode = true |    50 |            8400.68  |              8517 | 2.75ms   | 12.69ms  | 14.93ms  | 61275.519692ms |
+| pipeline-pgrst | k6/OPTIONSUniqueJWT.js   | m5a.8xlarge |           | db-pipeline-mode = true |    50 |           49689.4   |                 0 | 0.72ms   | 1.03ms   | 1.22ms   | 61261.23027ms  |
+| pipeline-pgrst | k6/PATCHSingle.js        | m5a.8xlarge |           | db-pipeline-mode = true |    50 |            6915.64  |                 0 | 5.77ms   | 12.93ms  | 14.86ms  | 60008.167569ms |
+| pipeline-pgrst | k6/POSTBulk.js           | m5a.8xlarge |           | db-pipeline-mode = true |    50 |            4291.85  |                 0 | 7.27ms   | 14.64ms  | 17.33ms  | 70884.898114ms |
+| pipeline-pgrst | k6/POSTSingle.js         | m5a.8xlarge |           | db-pipeline-mode = true |    50 |            6524.19  |                 0 | 5.86ms   | 13.49ms  | 15.45ms  | 60825.202467ms |
+| pipeline-pgrst | k6/RPCGETSingleEmbed.js  | m5a.8xlarge |           | db-pipeline-mode = true |    50 |            9989.15  |                 0 | 2.91ms   | 10.88ms  | 13.26ms  | 60003.686119ms |
+| pipeline-pgrst | k6/RPCGETSingle.js       | m5a.8xlarge |           | db-pipeline-mode = true |    50 |            9495.48  |                 0 | 2.47ms   | 11.77ms  | 13.86ms  | 60002.549071ms |
+| pipeline-pgrst | k6/RPCSimple.js          | m5a.8xlarge |           | db-pipeline-mode = true |    50 |            9121.64  |                 0 | 2.61ms   | 12.25ms  | 14.49ms  | 60002.379236ms |
+| pipeline-pgrst | k6/GETAllEmbed.js        | m5a.8xlarge |           | db-pipeline-mode = true |   100 |             322.562 |                 0 | 304.61ms | 360.86ms | 374.88ms | 60183.86938ms  |
+| pipeline-pgrst | k6/GETSingleEmbed.js     | m5a.8xlarge |           | db-pipeline-mode = true |   100 |            9243.53  |                 0 | 7.18ms   | 21.29ms  | 25.25ms  | 60009.762884ms |
+| pipeline-pgrst | k6/GETSingle.js          | m5a.8xlarge |           | db-pipeline-mode = true |   100 |            8463.37  |                 0 | 10.17ms  | 23.12ms  | 26.71ms  | 60014.982987ms |
+| pipeline-pgrst | k6/GETSingleJWT.js       | m5a.8xlarge |           | db-pipeline-mode = true |   100 |            8555.5   |                 0 | 9.67ms   | 22.78ms  | 26.26ms  | 60012.725088ms |
+| pipeline-pgrst | k6/GETSingleUniqueJWT.js | m5a.8xlarge |           | db-pipeline-mode = true |   100 |            8172.82  |              3798 | 8.75ms   | 23.72ms  | 27.41ms  | 61252.874102ms |
+| pipeline-pgrst | k6/OPTIONSUniqueJWT.js   | m5a.8xlarge |           | db-pipeline-mode = true |   100 |           67350.2   |                 0 | 0.97ms   | 1.71ms   | 4.08ms   | 61243.86306ms  |
+| pipeline-pgrst | k6/PATCHSingle.js        | m5a.8xlarge |           | db-pipeline-mode = true |   100 |            8340.98  |                 0 | 8.99ms   | 23.37ms  | 27.29ms  | 60009.475796ms |
+| pipeline-pgrst | k6/POSTBulk.js           | m5a.8xlarge |           | db-pipeline-mode = true |   100 |            4570.01  |                 0 | 15.67ms  | 27.79ms  | 33.21ms  | 74046.851342ms |
+| pipeline-pgrst | k6/POSTSingle.js         | m5a.8xlarge |           | db-pipeline-mode = true |   100 |            7586.76  |                 0 | 8.99ms   | 25.55ms  | 29.53ms  | 60981.394438ms |
+| pipeline-pgrst | k6/RPCGETSingleEmbed.js  | m5a.8xlarge |           | db-pipeline-mode = true |   100 |            7723.97  |                 0 | 12.84ms  | 22.45ms  | 26.34ms  | 60010.743486ms |
+| pipeline-pgrst | k6/RPCGETSingle.js       | m5a.8xlarge |           | db-pipeline-mode = true |   100 |            8747.27  |                 0 | 9.03ms   | 22.79ms  | 26.32ms  | 60018.615426ms |
+| pipeline-pgrst | k6/RPCSimple.js          | m5a.8xlarge |           | db-pipeline-mode = true |   100 |            8340.04  |                 0 | 9.89ms   | 23.41ms  | 26.99ms  | 60015.446631ms |
