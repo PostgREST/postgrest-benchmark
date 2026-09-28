@@ -21,13 +21,18 @@ def read_results(path):
             if not line.strip():
                 continue
             record = json.loads(line)
+            version = record.get("POSTGREST_VERSION")
             metrics = record["metrics"]
             duration = metrics["http_req_duration"]["values"]
             failed = metrics.get("http_req_failed", {}).get("values", {})
             rows.append({
-                "Version": record.get("POSTGREST_VERSION"),
+                "Version": Path(version).name if version else version,
                 "K6 script": record.get("K6_SCRIPT"),
                 "EC2": record.get("PGRSTBENCH_EC2_PGRST_INSTANCE_TYPE"),
+                "GHC RTS": record.get("PGRSTBENCH_GHC_RTS") or "",
+                "Extra config": (
+                    record.get("PGRSTBENCH_PGRST_EXTRA_CONFIG") or ""
+                ),
                 "VUs": int(
                     metrics.get("vus_max", metrics["vus"])["values"]["max"]
                 ),
@@ -72,9 +77,13 @@ def write_svg(data, path):
     script = data["K6 script"].iloc[0]
     instances = ", ".join(sorted(data["EC2"].dropna().unique()))
     duration = math.floor(data["Duration"].iloc[0] / 1000)
+    ghc_rts = " | ".join(data["GHC RTS"].unique())
+    extra_config = " | ".join(data["Extra config"].unique())
     figure.suptitle(
         f"K6 script: {script} | EC2 instance: {instances} | "
-        f"Duration: {duration}s"
+        f"Duration: {duration}s | "
+        f"GHC RTS: {ghc_rts} | Extra config: {extra_config}",
+        parse_math=False,
     )
     for axis, (title, column) in zip(axes, panels):
         for vus, group in data.groupby("VUs", sort=True):

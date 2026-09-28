@@ -46,6 +46,8 @@ function handleSummary(data) {
   data.PGRSTBENCH_EC2_PGRST_INSTANCE_TYPE =
     __ENV.PGRSTBENCH_EC2_PGRST_INSTANCE_TYPE || null;
   data.PGRSTBENCH_GHC_RTS = __ENV.PGRSTBENCH_GHC_RTS || null;
+  data.PGRSTBENCH_PGRST_EXTRA_CONFIG =
+    __ENV.PGRSTBENCH_PGRST_EXTRA_CONFIG || null;
 
   return {
     stdout: JSON.stringify(data) + '\n'
