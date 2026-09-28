@@ -214,6 +214,19 @@ $ export PGRSTBENCH_PGRST_VER="your/bin/postgrest-new"
 $ postgrest-bench-deploy
 ```
 
+### Compare with a new PostgREST binary
+
+You can use `postgrest-bench-pgrst-vs` to run a script using the current version vs another version or a binary.
+
+```bash
+# you can also add additional config to both
+export PGRSTBENCH_PGRST_EXTRA_CONFIG='db-pipeline-mode = true'
+
+postgrest-bench-pgrst-vs ./bin/pipeline-pgrst \
+postgrest-bench-k6-vary-vus 1m k6/* \
+> results/comparison.jsonl
+```
+
 ## Limitations
 
 - The instances tested for this benchmark are the `t3a` series and the `m5a` series.

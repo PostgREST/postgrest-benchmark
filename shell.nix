@@ -51,14 +51,18 @@ let
         for script do
           [ -f "$script" ] || continue
           echo -e "\nRunning k6 with $vus vus for $duration: $script" >&2
-          # we concat this utils file because we can't import it as regular since it's not on the remote instance
-          { cat k6/private/utils.js; cat "$script"; } | nixops ssh -d ${prefix} client k6 run -q \
+          # SSH joins command arguments into a string for the remote shell
+          printf -v remote_command '%q ' k6 run -q \
             --env K6_SCRIPT="$script" \
             --env POSTGREST_VERSION="''${PGRSTBENCH_PGRST_VER:-}" \
             --env PGRSTBENCH_EC2_PGRST_INSTANCE_TYPE="''${PGRSTBENCH_EC2_PGRST_INSTANCE_TYPE:-}" \
             --env PGRSTBENCH_GHC_RTS="''${PGRSTBENCH_GHC_RTS:-}" \
+            --env PGRSTBENCH_PGRST_EXTRA_CONFIG="''${PGRSTBENCH_PGRST_EXTRA_CONFIG:-}" \
             --duration "$duration" \
             --vus "$vus" -
+
+          # we concat this utils file because we can't import it as regular since it's not on the remote instance
+          { cat k6/private/utils.js; cat "$script"; } | nixops ssh -d ${prefix} client "$remote_command"
         done
       '';
   k6VariedVus =
@@ -67,7 +71,7 @@ let
         set -euo pipefail
 
         for i in '10' '50' '100'; do
-          ${prefix}-k6 $i $@
+          ${prefix}-k6 "$i" "$@"
         done
       '';
   clientPgBench =
@@ -178,6 +182,26 @@ let
         done
       '';
 
+  executePostgrestVs =
+    pkgs.writeShellScriptBin (prefix + "-pgrst-vs")
+      ''
+        set -euo pipefail
+
+        binary=$(${pkgs.coreutils}/bin/realpath -e -- "$1")
+        shift
+
+        echo -e "\nBenchmarking current PostgREST: ''${PGRSTBENCH_PGRST_VER:-default}\n" >&2
+        ${prefix}-deploy >&2
+        sleep 2s # TODO: sleep until PostgREST establishes a connection to pg
+        "$@"
+
+        export PGRSTBENCH_PGRST_VER="$binary"
+        echo -e "\nBenchmarking new PostgREST: $binary\n" >&2
+        ${prefix}-deploy >&2
+        sleep 2s # TODO: sleep until PostgREST establishes a connection to pg
+        "$@"
+      '';
+
   ssh =
     pkgs.writeShellScriptBin (prefix + "-ssh")
       ''
@@ -235,6 +259,7 @@ pkgs.mkShell {
     executeVaryHighInstances
     executeVaryRTS
     executeVaryPostgrestVersions
+    executePostgrestVs
     generateNixOSAMIFile
   ];
   shellHook = ''
@@ -248,6 +273,7 @@ pkgs.mkShell {
     export PGRSTBENCH_SEPARATE_PG="true"
 
     export PGRSTBENCH_PGRST_VER="v16.4"
+    export PGRSTBENCH_PGRST_EXTRA_CONFIG=""
     export PGRSTBENCH_GHC_RTS=""
     export PGRSTBENCH_EC2_PGRST_INSTANCE_TYPE="t3a.nano"
     export PGRSTBENCH_EC2_DB_INSTANCE_TYPE="m5a.8xlarge"

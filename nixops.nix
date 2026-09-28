@@ -15,6 +15,7 @@ let
     withUnixSocket        = builtins.getEnv "PGRSTBENCH_WITH_UNIX_SOCKET" == "true";
     withSeparatePg        = builtins.getEnv "PGRSTBENCH_SEPARATE_PG" == "true";
     ghcRts                = builtins.getEnv "PGRSTBENCH_GHC_RTS";
+    pgrstExtraConfig      = builtins.getEnv "PGRSTBENCH_PGRST_EXTRA_CONFIG";
     ec2PgrstInstanceType  = builtins.getEnv "PGRSTBENCH_EC2_PGRST_INSTANCE_TYPE";
     ec2ClientInstanceType = builtins.getEnv "PGRSTBENCH_EC2_CLIENT_INSTANCE_TYPE";
     ec2DbInstanceType     = builtins.getEnv "PGRSTBENCH_EC2_DB_INSTANCE_TYPE";
@@ -186,6 +187,8 @@ in {
           }
 
           jwt-secret = "reallyreallyreallyreallyverysafe"
+
+          ${env.pgrstExtraConfig}
         '';
       in
       {
