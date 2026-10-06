@@ -22,6 +22,4 @@ export default function() {
   http.post(URL + "/employee", body, {headers: { 'Content-Type': 'application/json' }});
 }
 
-export function teardown(data) {
-  http.del(URL + "/employee?title=eq.Load%20Tester", {}, {headers: { 'Prefer': 'count=exact' }});
-}
+export { truncateEmployee as teardown };

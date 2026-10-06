@@ -22,6 +22,4 @@ export default function() {
   http.post(URL + "/employee?columns=employee_id,first_name,last_name,title,reports_to,birth_date,hire_date,address,city,state,country,postal_code,phone,fax,email", body, {headers: { 'Content-Type': 'application/json' }});
 }
 
-export function teardown(data) {
-  http.del(URL + "/employee?title=eq.Load%20Tester", {}, {headers: { 'Prefer': 'count=exact' }});
-}
+export { truncateEmployee as teardown };

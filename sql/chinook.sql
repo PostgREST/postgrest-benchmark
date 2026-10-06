@@ -23863,6 +23863,10 @@ alter table employee drop constraint pk_employee cascade;
 drop index ifk_employee_reports_to;
 drop sequence employee_employee_id_seq cascade;
 
+create or replace function truncate_employee() returns void as $$
+  truncate table public.employee;
+$$ language sql volatile;
+
 create or replace function ret_albums() returns setof album as $$
   select * from album
 $$ language sql stable;

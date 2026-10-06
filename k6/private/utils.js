@@ -40,6 +40,13 @@ function generateJWT({ unique = false, iat = Math.floor(Date.now() / 1000) } = {
   return `${toSign}.${signature}`;
 }
 
+function truncateEmployee() {
+  const response = http.post(URL + "/rpc/truncate_employee");
+  if (response.status !== 204) {
+    throw new Error(`Teardown failed: HTTP ${response.status}: ${response.body}`);
+  }
+}
+
 function handleSummary(data) {
   data.K6_SCRIPT = __ENV.K6_SCRIPT || null;
   data.POSTGREST_VERSION = __ENV.POSTGREST_VERSION || null;
