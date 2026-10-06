@@ -143,16 +143,10 @@ let
 
         for rts in \
           default \
-          '-A32m -n2m' \
           '-A64m -n4m' \
-          '-A128m -n8m' \
-          '-A256m -n8m' \
-          '-N16 -A64m -n4m' \
-          '-N32 -A128m -n8m' \
-          '-N32 -qn16 -A128m -n8m' \
-          '-N32 -qn16 -A256m -n8m' \
-          '-N32 -qb -A128m -n8m' \
-          '-N32 -qb -qn16 -A256m -n8m'; do
+          '-A64m -n4m -AL2048m' \
+          '-A64m -n4m -AL3072m' \
+          '-A64m -n4m -AL4096m'; do
           if [ "$rts" = default ]; then
             rts=""
           fi
