@@ -20,7 +20,7 @@ let
 
         if test $info -eq 1
         then
-          echo "Creating deployment..."
+          echo "Creating deployment..." >&2
           nixops create -d ${prefix}
         fi
 
@@ -102,7 +102,7 @@ let
         for instance in 't3a.nano' 't3a.xlarge' 't3a.2xlarge' 'm5a.4xlarge' 'm5a.8xlarge'; do
           export PGRSTBENCH_EC2_PGRST_INSTANCE_TYPE="$instance"
 
-          echo -e "\nUsing a $instance EC2 type for pgrst\n"
+          echo -e "\nUsing a $instance EC2 type for pgrst\n" >&2
 
           ${prefix}-deploy
 
@@ -119,7 +119,7 @@ let
         for instance in 'm5a.8xlarge' 'm5a.12xlarge' 'm5a.16xlarge'; do
           export PGRSTBENCH_EC2_PGRST_INSTANCE_TYPE="$instance"
 
-          echo -e "\nUsing a $instance EC2 type for pgrst\n"
+          echo -e "\nUsing a $instance EC2 type for pgrst\n" >&2
 
           ${prefix}-deploy
 
@@ -148,7 +148,7 @@ let
             rts=""
           fi
           export PGRSTBENCH_GHC_RTS="$rts"
-          echo -e "\nUsing RTS settings: $rts for pgrst\n"
+          echo -e "\nUsing RTS settings: $rts for pgrst\n" >&2
 
           ${prefix}-deploy
 
@@ -224,7 +224,7 @@ let
         | ${pkgs.coreutils}/bin/tr -d '\n' \
         > ${global.nixosAMIFile}
 
-        echo "Wrote result to ${global.nixosAMIFile}"
+        echo "Wrote result to ${global.nixosAMIFile}" >&2
       '';
   generateReport =
     pkgs.writers.writePython3Bin (prefix + "-generate-report") {
