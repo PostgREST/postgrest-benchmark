@@ -99,7 +99,7 @@ let
       ''
         set -euo pipefail
 
-        for instance in 't3a.nano' 't3a.xlarge' 't3a.2xlarge' 'm5a.4xlarge' 'm5a.8xlarge'; do
+        for instance in 't3a.nano' 't3a.micro' 't3a.small' 't3a.medium' 't3a.large'; do
           export PGRSTBENCH_EC2_PGRST_INSTANCE_TYPE="$instance"
 
           echo -e "\nUsing a $instance EC2 type for pgrst\n" >&2
