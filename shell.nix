@@ -102,11 +102,7 @@ let
         for instance in 't3a.nano' 't3a.xlarge' 't3a.2xlarge' 'm5a.4xlarge' 'm5a.8xlarge'; do
           export PGRSTBENCH_EC2_PGRST_INSTANCE_TYPE="$instance"
 
-          if [ -z "$PGRSTBENCH_EC2_CLIENT_INSTANCE_TYPE" ]; then
-            echo -e "\nUsing a $instance EC2 type for pgrst and client instances\n"
-          else
-            echo -e "\nUsing a $instance EC2 type for pgrst\n"
-          fi
+          echo -e "\nUsing a $instance EC2 type for pgrst\n"
 
           ${prefix}-deploy
 
@@ -123,11 +119,7 @@ let
         for instance in 'm5a.8xlarge' 'm5a.12xlarge' 'm5a.16xlarge'; do
           export PGRSTBENCH_EC2_PGRST_INSTANCE_TYPE="$instance"
 
-          if [ -z "$PGRSTBENCH_EC2_CLIENT_INSTANCE_TYPE" ]; then
-            echo -e "\nUsing a $instance EC2 type for pgrst and client instances\n"
-          else
-            echo -e "\nUsing a $instance EC2 type for pgrst\n"
-          fi
+          echo -e "\nUsing a $instance EC2 type for pgrst\n"
 
           ${prefix}-deploy
 
@@ -135,6 +127,11 @@ let
           $@
         done
       '';
+
+#postgrest-bench-vary-high-instances \
+#postgrest-bench-vary-rts \
+#postgrest-bench-vary-vus 1m k6/{POSTBulk.js,POSTSingle.js,GETSingleEmbed.js,GETAllEmbed.js} \
+#> results/rts.jsonl
 
   executeVaryRTS =
     pkgs.writeShellScriptBin (prefix + "-vary-rts")
