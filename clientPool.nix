@@ -4,7 +4,9 @@
 {
   "t3a.nano"     = 10;
   "t3a.micro"    = 15;
+  "t3a.small"    = 20;
   "t3a.medium"   = 30;
+  "t3a.large"    = 40;
   "t3a.xlarge"   = 40;
   "t3a.2xlarge"  = 50;
   "m5a.large"    = 50;

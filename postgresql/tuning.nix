@@ -45,6 +45,28 @@
     max_wal_size = "4GB";
     min_wal_size = "1GB";
   };
+  "t3a.small" = {
+    max_connections = 80;
+    shared_buffers = "512MB";
+    work_mem = "5MB";
+    maintenance_work_mem = "128MB";
+    max_worker_processes = 2;
+    max_parallel_maintenance_workers = 1;
+    max_parallel_workers_per_gather = 1;
+    max_parallel_workers = 2;
+
+    effective_cache_size = "1536MB";
+    default_statistics_target = 100;
+    effective_io_concurrency = 200;
+
+    wal_level = "minimal";
+    archive_mode = "off";
+    max_wal_senders = 0;
+    wal_compression = "on";
+    wal_buffers = "16MB";
+    max_wal_size = "4GB";
+    min_wal_size = "1GB";
+  };
   "t3a.medium" = {
     max_connections = 120;
     shared_buffers = "1GB";
@@ -56,6 +78,28 @@
     max_parallel_workers = 2;
 
     effective_cache_size = "3GB";
+    default_statistics_target = 100;
+    effective_io_concurrency = 200;
+
+    wal_level = "minimal";
+    archive_mode = "off";
+    max_wal_senders = 0;
+    wal_compression = "on";
+    wal_buffers = "16MB";
+    max_wal_size = "4GB";
+    min_wal_size = "1GB";
+  };
+  "t3a.large" = {
+    max_connections = 160;
+    shared_buffers = "2GB";
+    work_mem = "10MB";
+    maintenance_work_mem = "512MB";
+    max_worker_processes = 2;
+    max_parallel_maintenance_workers = 1;
+    max_parallel_workers_per_gather = 1;
+    max_parallel_workers = 2;
+
+    effective_cache_size = "6GB";
     default_statistics_target = 100;
     effective_io_concurrency = 200;
 
