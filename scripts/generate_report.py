@@ -83,26 +83,25 @@ def write_svg(data, path):
         ("p90 latency", "p90"),
         ("p95 latency", "p95"),
     ]
-    colors = {10: "tab:blue", 50: "tab:orange", 100: "tab:green"}
     figure, axes = plt.subplots(5, 1, figsize=(18, 18), sharex=True)
     script = data["K6 script"].iloc[0]
-    instances = ", ".join(sorted(data["EC2"].dropna().unique()))
     duration = math.floor(data["Duration"].iloc[0] / 1000)
     extra_config = " | ".join(data["Extra config"].unique())
     figure.suptitle(
-        f"K6 script: {script} | EC2 instance: {instances} | "
+        f"K6 script: {script} | "
         f"Duration: {duration}s | "
         f"Extra config: {extra_config}",
         parse_math=False,
     )
     for axis, (title, column) in zip(axes, panels):
-        for vus, group in data.groupby("VUs", sort=True):
+        for (vus, instance), group in data.groupby(
+            ["VUs", "EC2"], sort=True, dropna=False
+        ):
             axis.plot(
                 group["_position"],
                 group[column],
                 marker="o",
-                label=f"{vus} VUs",
-                color=colors.get(vus),
+                label=f"{vus} VUs | {instance}",
             )
         axis.set_title(title)
         # TODO some charts were showing negative labels
