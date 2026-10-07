@@ -64,7 +64,18 @@ def write_svg(data, path):
     data = data.assign(
         _version=pd.Categorical(data["Version"], versions, ordered=True)
     )
-    data = data.sort_values(["_version", "VUs"])
+    data = data.sort_values(["_version", "GHC RTS", "VUs"])
+    variants = list(
+        data[["Version", "GHC RTS"]].drop_duplicates().itertuples(
+            index=False, name=None
+        )
+    )
+    positions = {variant: index for index, variant in enumerate(variants)}
+    data = data.assign(
+        _position=[positions[variant] for variant in zip(
+            data["Version"], data["GHC RTS"]
+        )]
+    )
     panels = [
         ("http_reqs (requests/second)", "http_reqs (req/s)"),
         ("failed requests", "failed requests"),
@@ -77,18 +88,17 @@ def write_svg(data, path):
     script = data["K6 script"].iloc[0]
     instances = ", ".join(sorted(data["EC2"].dropna().unique()))
     duration = math.floor(data["Duration"].iloc[0] / 1000)
-    ghc_rts = " | ".join(data["GHC RTS"].unique())
     extra_config = " | ".join(data["Extra config"].unique())
     figure.suptitle(
         f"K6 script: {script} | EC2 instance: {instances} | "
         f"Duration: {duration}s | "
-        f"GHC RTS: {ghc_rts} | Extra config: {extra_config}",
+        f"Extra config: {extra_config}",
         parse_math=False,
     )
     for axis, (title, column) in zip(axes, panels):
         for vus, group in data.groupby("VUs", sort=True):
             axis.plot(
-                group["_version"].astype(str),
+                group["_position"],
                 group[column],
                 marker="o",
                 label=f"{vus} VUs",
@@ -100,7 +110,16 @@ def write_svg(data, path):
             axis.set_ylim(bottom=0)
         axis.grid(axis="y", color="lightgray")
         axis.legend(loc="best")
-    axes[-1].tick_params(axis="x", rotation=60)
+    axes[-1].set_xticks(
+        range(len(variants)),
+        [
+            f"{version} | {rts or 'default'}"
+            for version, rts in variants
+        ],
+        rotation=60,
+        ha="right",
+        parse_math=False,
+    )
     figure.tight_layout(rect=(0, 0, 1, 0.97))
     figure.savefig(path, format="svg")
     plt.close(figure)
