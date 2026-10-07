@@ -128,11 +128,8 @@ let
         done
       '';
 
-#postgrest-bench-vary-high-instances \
-#postgrest-bench-vary-rts \
-#postgrest-bench-vary-vus 1m k6/{POSTBulk.js,POSTSingle.js,GETSingleEmbed.js,GETAllEmbed.js} \
-#> results/rts.jsonl
-
+  # https://ghc.gitlab.haskell.org/ghc/doc/users_guide/runtime_control.html#rts-flag-n-size
+  # -n becomes 4m when -A is 16m or larger, so leave `-n` alone.
   executeVaryRTS =
     pkgs.writeShellScriptBin (prefix + "-vary-rts")
       ''
@@ -140,10 +137,9 @@ let
 
         for rts in \
           default \
-          '-A64m -n4m' \
-          '-A64m -n4m -AL2048m' \
-          '-A64m -n4m -AL3072m' \
-          '-A64m -n4m -AL4096m'; do
+          '-A16m' \
+          '-A32m' \
+          '-A64m'; do
           if [ "$rts" = default ]; then
             rts=""
           fi
