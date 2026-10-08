@@ -91,9 +91,7 @@ let
         ${prefix}-k6-vary-vus $2
       '';
 
-  ## execute a command by varing the size of pg and pgrst instances
-  ## postgrest-bench-vary-instances postgrest-bench-pgbench-k6-vary pgbench/GETSingle.sql k6/GETSingle.js > GETSINGLE.txt
-  ## postgrest-bench-vary-instances postgrest-bench-k6-vary-vus k6/GETSingle.js > GETSINGLE2.txt
+  # all of the instances have only 2 cores, they only vary their memory from 0.5G, 1G, 2G to 8G
   executeVaryInstances =
     pkgs.writeShellScriptBin (prefix + "-vary-instances")
       ''
@@ -111,12 +109,13 @@ let
         done
       '';
 
+  # the instances double their cores and memory, from 4/16G to 48/192G
   executeVaryHighInstances =
     pkgs.writeShellScriptBin (prefix + "-vary-high-instances")
       ''
         set -euo pipefail
 
-        for instance in 'm5a.8xlarge' 'm5a.12xlarge' 'm5a.16xlarge'; do
+        for instance in 'm5a.xlarge' 'm5a.2xlarge' 'm5a.4xlarge' 'm5a.8xlarge' 'm5a.12xlarge'; do
           export PGRSTBENCH_EC2_PGRST_INSTANCE_TYPE="$instance"
 
           echo -e "\nUsing a $instance EC2 type for pgrst\n" >&2
