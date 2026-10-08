@@ -7,8 +7,6 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import pandas as pd
 
-RESULTS_DIR = Path("results")
-
 
 def version_key(version):
     return tuple(int(part) for part in re.findall(r"\d+", version))
@@ -133,11 +131,11 @@ def main():
     data = read_results(args.input)
     if data.empty:
         raise SystemExit("empty input")
-    RESULTS_DIR.mkdir(exist_ok=True)
-    markdown_path = RESULTS_DIR / f"{args.input.stem}.md"
+    results_dir = args.input.parent
+    markdown_path = results_dir / f"{args.input.stem}.md"
     for script, script_data in data.groupby("K6 script", dropna=False):
         script_stem = Path(str(script)).stem
-        svg_path = RESULTS_DIR / f"{script_stem}.svg"
+        svg_path = results_dir / f"{script_stem}.svg"
         write_svg(script_data, svg_path)
         print(f"Generated report: {svg_path}")
     write_markdown(data, markdown_path)
