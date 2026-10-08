@@ -1,8 +1,10 @@
 import { hmac } from 'k6/crypto';
 import { b64encode } from 'k6/encoding';
+import exec from 'k6/execution';
 
 const SECRET = 'reallyreallyreallyreallyverysafe';
 const URL = 'http://pgrst';
+let jwtSequence = 0;
 
 function base64UrlEncode(input) {
   return b64encode(input, 'rawurl');
@@ -29,7 +31,10 @@ function generateJWT({ unique = false, iat = Math.floor(Date.now() / 1000) } = {
   };
 
   if (unique) {
-    payload.exp = iat + 30;
+    // Each VU has its own counter; its test-wide ID prevents collisions across VUs.
+    payload.jti = `${exec.vu.idInTest}:${jwtSequence++}`;
+    // Refreshed on every request, with headroom for clock skew and slow responses.
+    payload.exp = iat + 300;
   }
 
   const encodedHeader = base64UrlEncode(JSON.stringify(header));
