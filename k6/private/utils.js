@@ -48,6 +48,7 @@ function truncateEmployee() {
 }
 
 function handleSummary(data) {
+  delete data.setup_data;
   data.K6_SCRIPT = __ENV.K6_SCRIPT || null;
   data.POSTGREST_VERSION = __ENV.POSTGREST_VERSION || null;
   data.PGRSTBENCH_EC2_PGRST_INSTANCE_TYPE =
