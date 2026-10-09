@@ -111,6 +111,8 @@ $ postgrest-bench-k6 20 10s k6/{GETSingle.js,GETSingleJWT.js}
 
 There are different scripts on `k6/` which test different PostgREST requests.
 
+The `Large` ones send or get bodies of about 2 MB, past PostgREST's request and response stream thresholds: JSON with `?columns=` and a raw body sent to a function, every track with what it's in, and one large value from a function.
+
 ### All scripts at once
 
 `postgrest-bench-k6-mixed` runs the scripts at the same time, each as a k6 scenario, splitting the VUs among them:
