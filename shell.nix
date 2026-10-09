@@ -136,6 +136,11 @@ let
           done
         done
       '';
+  localReport =
+    pkgs.writeShellScriptBin (prefix + "-local-report")
+      ''
+        exec ${python}/bin/python3 ${./scripts/local_report.py} "$@"
+      '';
   k6VariedVus =
     pkgs.writeShellScriptBin (prefix + "-k6-vary-vus")
       ''
@@ -321,6 +326,7 @@ pkgs.mkShell {
     executeVaryPostgrestVersions
     executePostgrestVs
     generateNixOSAMIFile
+    localReport
   ] ++ pkgs.lib.optionals pkgs.stdenv.isLinux [
     local
     localVs

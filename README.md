@@ -278,6 +278,12 @@ postgrest-bench-local-vs 5 main=./postgrest-main new=./postgrest-new -- \
   postgrest-bench-local 10,50,100 30s k6/*.js > results/local.jsonl
 ```
 
+`postgrest-bench-local-report` turns the summaries into markdown tables: for each script, VUs and cores, the medians over the rounds, with their ranges, of the requests per second, latencies, failures, CPU time and instructions per request, and peak RSS; the requests per second and p95 latency of every scenario of a mixed run; and how the requests per second grow with PostgREST's cores. The first binary is the baseline the others are compared to:
+
+```bash
+postgrest-bench-local-report results/local.jsonl > results/local.md
+```
+
 ## Limitations
 
 - The instances tested for this benchmark are the `t3a` series and the `m5a` series.
