@@ -245,6 +245,32 @@ postgrest-bench-k6-vary-vus 1m k6/* \
 > results/comparison.jsonl
 ```
 
+## On one machine
+
+To compare binaries closely, a single large Linux machine (e.g. a `c7g.metal`) keeps the noise of shared instances and the network out of the results. `postgrest-bench-local` runs PostgreSQL, PostgREST and k6 there, each pinned to CPUs of its own, with the deployment's settings: the database of an `m5a.8xlarge` (`PGRSTBENCH_EC2_DB_INSTANCE_TYPE`), with the sample database, and PostgREST with the pool of an m5a instance with as many cores. It starts both from scratch, warms up, and then runs k6 for each number of VUs:
+
+```bash
+export PGRSTBENCH_PGRST_VER=/path/to/postgrest
+postgrest-bench-local 10,50,100 30s k6/*.js > results/local.jsonl
+
+# or all scripts at once, as with postgrest-bench-k6-mixed
+PGRSTBENCH_K6_MIXED=true postgrest-bench-local 10,50,100 30s k6/*.js
+```
+
+Each summary has, under `PGRSTBENCH_LOCAL`, the CPU time PostgreSQL and PostgREST used on their CPUs while k6 ran, the instructions they executed, if `perf` can count them, and PostgREST's peak RSS.
+
+| Variable | Default | |
+|---|---|---|
+| `PGRSTBENCH_LOCAL_PGRST_CORES` | 2 | PostgREST's cores, and its `-N` |
+| `PGRSTBENCH_LOCAL_PGRST_FIRST_CPU` | 32 | the first of PostgREST's CPUs |
+| `PGRSTBENCH_LOCAL_PG_CPUS` | 8-31 | PostgreSQL's CPUs |
+| `PGRSTBENCH_LOCAL_K6_CPUS` | 40-63 | k6's CPUs |
+| `PGRSTBENCH_LOCAL_POOL` | by cores | PostgREST's pool |
+| `PGRSTBENCH_LOCAL_WARMUP` | 10s | how long k6 runs first, unmeasured |
+| `PGRSTBENCH_LOCAL_PORT` | 3000 | PostgREST's port, and the admin server's after it |
+
+The defaults suit 64 CPUs: PostgreSQL needs about one and a half times PostgREST's cores, and k6 half. The other CPUs are left to the system. `PGRSTBENCH_GHC_RTS`, `PGRSTBENCH_PGRST_EXTRA_CONFIG` and `PGRSTBENCH_JWT_CACHE_ENABLED` apply as in the deployment.
+
 ## Limitations
 
 - The instances tested for this benchmark are the `t3a` series and the `m5a` series.

@@ -93,6 +93,17 @@ let
           ''${PGRSTBENCH_K6_RATE:+--rate "$PGRSTBENCH_K6_RATE"} "$@" \
         | nixops ssh -d ${prefix} client "$remote_command"
       '';
+  local =
+    pkgs.writeShellApplication {
+      name = prefix + "-local";
+      # the PostgreSQL the deployment runs
+      runtimeInputs = [ pkgs.postgresql_14 pkgs.k6 pkgs.jq pkgs.util-linux pkgs.curl python ];
+      text = ''
+        TUNING=${pkgs.writeText "tuning.json" (builtins.toJSON (pkgs.lib.mapAttrs (_: instance: instance.postgresql) (import ./tuning.nix)))}
+        POOLS=${pkgs.writeText "pools.json" (builtins.toJSON (pkgs.lib.mapAttrs (_: instance: instance.dbPool) (import ./tuning.nix)))}
+        SAMPLE_DB=${./sql/chinook.sql}
+      '' + builtins.readFile ./local/run.sh;
+    };
   k6VariedVus =
     pkgs.writeShellScriptBin (prefix + "-k6-vary-vus")
       ''
@@ -278,6 +289,8 @@ pkgs.mkShell {
     executeVaryPostgrestVersions
     executePostgrestVs
     generateNixOSAMIFile
+  ] ++ pkgs.lib.optionals pkgs.stdenv.isLinux [
+    local
   ];
   shellHook = ''
     export NIX_PATH="nixpkgs=${nixpkgs}:."
