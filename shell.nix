@@ -104,6 +104,38 @@ let
         SAMPLE_DB=${./sql/chinook.sql}
       '' + builtins.readFile ./local/run.sh;
     };
+  # Every round runs the command once per binary, starting with a different
+  # one, so that a drift over the rounds doesn't favour any
+  localVs =
+    pkgs.writeShellScriptBin (prefix + "-local-vs")
+      ''
+        set -euo pipefail
+
+        if [ "$#" -lt 4 ]; then
+          echo "usage: ${prefix}-local-vs ROUNDS NAME=BINARY... -- COMMAND..." >&2
+          exit 1
+        fi
+
+        rounds=$1
+        shift
+        binaries=()
+        while [ "$1" != -- ]; do
+          binaries+=("$1")
+          shift
+        done
+        shift
+
+        count=''${#binaries[@]}
+        for round in $(seq 1 "$rounds"); do
+          for offset in $(seq 0 $((count - 1))); do
+            binary=''${binaries[$(( (round - 1 + offset) % count ))]}
+            name=''${binary%%=*}
+            echo -e "\nRound $round of $rounds: $name\n" >&2
+            PGRSTBENCH_PGRST_VER=$(${pkgs.coreutils}/bin/realpath -e -- "''${binary#*=}") \
+            PGRSTBENCH_LOCAL_NAME=$name PGRSTBENCH_LOCAL_ROUND=$round "$@"
+          done
+        done
+      '';
   k6VariedVus =
     pkgs.writeShellScriptBin (prefix + "-k6-vary-vus")
       ''
@@ -291,6 +323,7 @@ pkgs.mkShell {
     generateNixOSAMIFile
   ] ++ pkgs.lib.optionals pkgs.stdenv.isLinux [
     local
+    localVs
   ];
   shellHook = ''
     export NIX_PATH="nixpkgs=${nixpkgs}:."

@@ -271,6 +271,13 @@ Each summary has, under `PGRSTBENCH_LOCAL`, the CPU time PostgreSQL and PostgRES
 
 The defaults suit 64 CPUs: PostgreSQL needs about one and a half times PostgREST's cores, and k6 half. The other CPUs are left to the system. `PGRSTBENCH_GHC_RTS`, `PGRSTBENCH_PGRST_EXTRA_CONFIG` and `PGRSTBENCH_JWT_CACHE_ENABLED` apply as in the deployment.
 
+To compare binaries, `postgrest-bench-local-vs` runs a command once per binary in each round, starting each round with a different binary, so that a drift over time doesn't favour any. It names each summary's binary and round:
+
+```bash
+postgrest-bench-local-vs 5 main=./postgrest-main new=./postgrest-new -- \
+  postgrest-bench-local 10,50,100 30s k6/*.js > results/local.jsonl
+```
+
 ## Limitations
 
 - The instances tested for this benchmark are the `t3a` series and the `m5a` series.
