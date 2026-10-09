@@ -111,6 +111,24 @@ $ postgrest-bench-k6 20 10s k6/{GETSingle.js,GETSingleJWT.js}
 
 There are different scripts on `k6/` which test different PostgREST requests.
 
+### All scripts at once
+
+`postgrest-bench-k6-mixed` runs the scripts at the same time, each as a k6 scenario, splitting the VUs among them:
+
+```
+$ postgrest-bench-k6-mixed 100 30s k6/*.js
+```
+
+Every request is tagged with its scenario, so the summary has each scenario's requests, latencies and failures, as `http_reqs{scenario:GETSingle}`, `http_req_duration{scenario:GETSingle}` and so on, besides the totals of the mix.
+
+By default every scenario's VUs send requests as fast as they can. To have each scenario run at a constant rate instead, set the total iterations per second, which are split evenly among the scenarios:
+
+```
+$ PGRSTBENCH_K6_RATE=2000 postgrest-bench-k6-mixed 100 30s k6/*.js
+```
+
+A scenario whose VUs can't keep up drops iterations, counted in `dropped_iterations`.
+
 ## Pgbench
 
 pgbench also runs on the client instance, you can get its output with:

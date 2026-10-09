@@ -66,6 +66,33 @@ let
           { cat k6/private/utils.js; cat "$script"; } | nixops ssh -d ${prefix} client "$remote_command"
         done
       '';
+  k6Mixed =
+    pkgs.writeShellScriptBin (prefix + "-k6-mixed")
+      ''
+        set -euo pipefail
+
+        if [ "$#" -lt 3 ]; then
+          echo "usage: ${prefix}-k6-mixed VUS DURATION SCRIPT..." >&2
+          exit 1
+        fi
+
+        vus=$1
+        duration=$2
+        shift 2
+
+        echo -e "\nRunning k6 with $vus vus for $duration, all at once: $*" >&2
+        # SSH joins command arguments into a string for the remote shell
+        printf -v remote_command '%q ' k6 run -q \
+          --env K6_SCRIPT=mixed \
+          --env POSTGREST_VERSION="''${PGRSTBENCH_PGRST_VER:-}" \
+          --env PGRSTBENCH_EC2_PGRST_INSTANCE_TYPE="''${PGRSTBENCH_EC2_PGRST_INSTANCE_TYPE:-}" \
+          --env PGRSTBENCH_GHC_RTS="''${PGRSTBENCH_GHC_RTS:-}" \
+          --env PGRSTBENCH_PGRST_EXTRA_CONFIG="''${PGRSTBENCH_PGRST_EXTRA_CONFIG:-}" -
+
+        python3 scripts/mixed_script.py --vus "$vus" --duration "$duration" \
+          ''${PGRSTBENCH_K6_RATE:+--rate "$PGRSTBENCH_K6_RATE"} "$@" \
+        | nixops ssh -d ${prefix} client "$remote_command"
+      '';
   k6VariedVus =
     pkgs.writeShellScriptBin (prefix + "-k6-vary-vus")
       ''
@@ -238,6 +265,7 @@ pkgs.mkShell {
     deploy
     info
     k6
+    k6Mixed
     k6VariedVus
     ssh
     destroy
