@@ -97,7 +97,7 @@ let
     pkgs.writeShellApplication {
       name = prefix + "-local";
       # the PostgreSQL the deployment runs
-      runtimeInputs = [ pkgs.postgresql_14 pkgs.k6 pkgs.jq pkgs.util-linux pkgs.curl python ];
+      runtimeInputs = [ pkgs.postgresql_14 pkgs.k6 pkgs.jq pkgs.util-linux pkgs.curl pkgs.openssl python ];
       text = ''
         TUNING=${pkgs.writeText "tuning.json" (builtins.toJSON (pkgs.lib.mapAttrs (_: instance: instance.postgresql) (import ./tuning.nix)))}
         POOLS=${pkgs.writeText "pools.json" (builtins.toJSON (pkgs.lib.mapAttrs (_: instance: instance.dbPool) (import ./tuning.nix)))}

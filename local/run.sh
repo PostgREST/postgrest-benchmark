@@ -26,6 +26,10 @@ k6_cpus=${PGRSTBENCH_LOCAL_K6_CPUS:-40-63}
 warmup=${PGRSTBENCH_LOCAL_WARMUP:-10s}
 port=${PGRSTBENCH_LOCAL_PORT:-3000}
 db_instance=${PGRSTBENCH_EC2_DB_INSTANCE_TYPE:-m5a.8xlarge}
+# Unset, PostgREST connects over a Unix socket. Set, over TCP with this
+# sslmode, to a PostgreSQL that takes TLS, unless PGRSTBENCH_LOCAL_DB_SSL=off
+sslmode=${PGRSTBENCH_LOCAL_DB_SSLMODE:-}
+db_ssl=${PGRSTBENCH_LOCAL_DB_SSL:-on}
 
 # The pool the deployment gives an m5a instance with as many cores: it has two
 # vCPUs, threads of one core, per core
@@ -80,13 +84,26 @@ echo "Starting PostgreSQL on CPUs $pg_cpus, with the settings of an $db_instance
 initdb -D "$tmp/db" -U postgres --auth=trust > /dev/null
 jq -r --arg instance "$db_instance" '.[$instance] | to_entries[] | "\(.key) = '\''\(.value)'\''"' "$TUNING" \
   >> "$tmp/db/postgresql.conf"
+listen=
+db_uri="postgres://postgres@/postgres?host=$tmp"
+if [ -n "$sslmode" ]; then
+  listen=127.0.0.1
+  db_uri="postgres://postgres@127.0.0.1/postgres?sslmode=$sslmode"
+  if [ "$db_ssl" = on ]; then
+    openssl req -new -x509 -days 1 -nodes -subj /CN=localhost \
+      -keyout "$tmp/db/server.key" -out "$tmp/db/server.crt" 2> /dev/null
+    chmod 600 "$tmp/db/server.key"
+    echo "ssl = on" >> "$tmp/db/postgresql.conf"
+  fi
+  echo "PostgREST connects over TCP with sslmode=$sslmode, and PostgreSQL has TLS $db_ssl" >&2
+fi
 taskset -c "$pg_cpus" pg_ctl -D "$tmp/db" -l "$tmp/db.log" -w \
-  -o "-c listen_addresses='' -k $tmp" start > /dev/null
+  -o "-c listen_addresses='$listen' -k $tmp" start > /dev/null
 psql -h "$tmp" -U postgres -q -v ON_ERROR_STOP=1 -f "$SAMPLE_DB" > /dev/null 2> "$tmp/sample-db.log"
 
 echo "Starting PostgREST on CPUs $pgrst_cpus, with a pool of $pool: $bin" >&2
 {
-  echo "db-uri = \"postgres://postgres@/postgres?host=$tmp\""
+  echo "db-uri = \"$db_uri\""
   echo 'db-schemas = "public"'
   echo 'db-anon-role = "postgres"'
   echo "db-pool = $pool"
@@ -206,10 +223,11 @@ for run in "${runs[@]}"; do
     --argjson cores "$cores" --argjson pool "$pool" --argjson vus "$vus" --arg duration "$duration" \
     --arg db_instance "$db_instance" \
     --argjson pg_ms "$pg_ms" --argjson pgrst_ms "$pgrst_ms" --argjson instructions "$instructions" \
-    --argjson peak_rss_kb "$peak_rss_kb" \
+    --argjson peak_rss_kb "$peak_rss_kb" --arg sslmode "$sslmode" --arg db_ssl "$db_ssl" \
     '. + {PGRSTBENCH_LOCAL: {
        name: $name, round: $round, cores: $cores, pool: $pool, vus: $vus, duration: $duration,
        db_instance: $db_instance, cpus: {pg: $pg_cpus, pgrst: $pgrst_cpus, k6: $k6_cpus},
+       db: (if $sslmode == "" then {socket: "unix"} else {socket: "tcp", sslmode: $sslmode, ssl: $db_ssl} end),
        pg: {cpu_ms: $pg_ms, instructions: $instructions.pg},
        pgrst: {cpu_ms: $pgrst_ms, instructions: $instructions.pgrst, peak_rss_kb: $peak_rss_kb}}}' \
     <<< "$summary"
