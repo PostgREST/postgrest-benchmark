@@ -214,6 +214,8 @@ in {
           }
 
           http {
+            access_log off; # otherwise benchmark traffic can fill the disk
+
             upstream postgrest {
               ${
                 if env.withUnixSocket
