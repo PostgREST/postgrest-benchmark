@@ -56,6 +56,7 @@ let
             --env K6_SCRIPT="$script" \
             --env POSTGREST_VERSION="''${PGRSTBENCH_PGRST_VER:-}" \
             --env PGRSTBENCH_EC2_PGRST_INSTANCE_TYPE="''${PGRSTBENCH_EC2_PGRST_INSTANCE_TYPE:-}" \
+            --env PGRSTBENCH_SEPARATE_PG="''${PGRSTBENCH_SEPARATE_PG:-}" \
             --env PGRSTBENCH_GHC_RTS="''${PGRSTBENCH_GHC_RTS:-}" \
             --env PGRSTBENCH_PGRST_EXTRA_CONFIG="''${PGRSTBENCH_PGRST_EXTRA_CONFIG:-}" \
             --duration "$duration" \
