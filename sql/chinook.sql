@@ -23882,3 +23882,6 @@ $$ language sql immutable;
 create or replace function sleep(seconds double precision default 5) returns void as $$
   select pg_sleep(seconds);
 $$ language sql;
+
+-- Ensure postgREST catches up the whole schema
+NOTIFY pgrst, 'reload schema';
