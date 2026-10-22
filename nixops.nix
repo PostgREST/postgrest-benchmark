@@ -9,6 +9,7 @@ let
   accessKeyId = builtins.getEnv "PGRSTBENCH_AWS_PROFILE";
   maxFileDescriptors = 500000;
   pgPackage = pkgs.postgresql_14;
+  tuning = import ./tuning.nix;
   env = {
     withNginx             = builtins.getEnv "PGRSTBENCH_WITH_NGINX" == "true";
     withMaxFds            = builtins.getEnv "PGRSTBENCH_MAX_FDS" == "true";
@@ -143,7 +144,7 @@ in {
 
     services.postgresql = pkgs.lib.mkIf (!env.withSeparatePg)
                           (pgService
-                            (builtins.getAttr config.deployment.ec2.instanceType (import ./postgresql/tuning.nix))
+                            tuning.${config.deployment.ec2.instanceType}.postgresql
                             resources.vpcSubnets.pgrstBenchSubnet.cidrBlock);
 
     systemd.services =
@@ -162,7 +163,7 @@ in {
           db-schema = "public"
           db-anon-role = "postgres"
           db-use-legacy-gucs = false
-          db-pool = ${builtins.toString (builtins.getAttr config.deployment.ec2.instanceType (import ./clientPool.nix))}
+          db-pool = ${builtins.toString tuning.${config.deployment.ec2.instanceType}.dbPool}
           ${
             if env.pgrstJWTCacheEnabled
               then ""
@@ -296,7 +297,7 @@ in {
   client = {config, nodes, resources, ...}: {
     environment.systemPackages =
     let
-      pgbenchPoolSize = builtins.toString (builtins.getAttr config.deployment.ec2.instanceType (import ./clientPool.nix));
+      pgbenchPoolSize = builtins.toString tuning.${config.deployment.ec2.instanceType}.dbPool;
     in
     [
       (pkgs.writeShellScriptBin "pgbench-tuned"
@@ -363,7 +364,7 @@ in {
     boot.loader.grub.device = pkgs.lib.mkForce "/dev/nvme0n1"; # Fix for https://github.com/NixOS/nixpkgs/issues/62824#issuecomment-516369379
 
     services.postgresql = pgService
-        (builtins.getAttr config.deployment.ec2.instanceType (import ./postgresql/tuning.nix))
+        tuning.${config.deployment.ec2.instanceType}.postgresql
         resources.vpcSubnets.pgrstBenchSubnet.cidrBlock;
 
     networking.firewall.allowedTCPPorts = [ 5432 ];
