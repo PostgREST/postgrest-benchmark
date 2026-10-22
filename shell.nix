@@ -130,6 +130,7 @@ let
 
   # https://ghc.gitlab.haskell.org/ghc/doc/users_guide/runtime_control.html#rts-flag-n-size
   # -n becomes 4m when -A is 16m or larger, so leave `-n` alone.
+  # Docs for -N params https://ghc.gitlab.haskell.org/ghc/doc/users_guide/using-concurrent.html#rts-options-for-smp-parallelism
   executeVaryRTS =
     pkgs.writeShellScriptBin (prefix + "-vary-rts")
       ''
@@ -137,9 +138,10 @@ let
 
         for rts in \
           default \
-          '-A16m' \
-          '-A32m' \
-          '-A64m'; do
+          '-N4' \
+          '-N8' \
+          '-N16' \
+          '-N32'; do
           if [ "$rts" = default ]; then
             rts=""
           fi
