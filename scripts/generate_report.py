@@ -8,9 +8,29 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 
+VARIANT_COLUMNS = ["Version", "GHC RTS", "Extra config"]
+SERIES_COLUMNS = ["VUs", "EC2", "Separate PG"]
+LATENCY_METRICS = ["p50", "p90", "p95"]
+METRICS = ["http_reqs (req/s)", "failed requests", *LATENCY_METRICS]
+
+
 def version_key(version):
     numbers = tuple(int(part) for part in re.findall(r"\d+", version))
     return (not version.startswith("v"), numbers)
+
+
+def get_variants(data):
+    return sorted(
+        data[VARIANT_COLUMNS].drop_duplicates().itertuples(
+            index=False, name=None
+        ),
+        key=lambda variant: (version_key(variant[0]), variant[1:]),
+    )
+
+
+def variant_label(variant):
+    version, rts, extra_config = variant
+    return f"{version} | {rts or 'default'} | {extra_config or 'default'}"
 
 
 def read_results(path):
@@ -52,38 +72,70 @@ def write_markdown(data, path):
         lambda value: f"{value:.6f}"
     )
     table["Duration"] = table["Duration"].map(lambda value: f"{value}ms")
-    for column in ("p50", "p90", "p95"):
+    for column in LATENCY_METRICS:
         table[column] = table[column].map(lambda value: f"{value:.2f}ms")
     path.write_text(
         table.to_markdown(index=False)
     )
 
 
+def percentage_change(baseline, candidate):
+    return (candidate / baseline.replace(0, float("nan")) - 1) * 100
+
+
+def write_vs_markdown(data, path):
+    variants = get_variants(data)
+    if len(variants) != 2:
+        return False
+
+    baseline, candidate = variants
+    layouts = {"true": "Separate PG", "false": "Colocated PG"}
+    averages = data.groupby(
+        ["K6 script"] + SERIES_COLUMNS + VARIANT_COLUMNS, dropna=False
+    )[METRICS].mean()
+    tables = []
+    for metric in METRICS:
+        values = averages[metric].unstack(VARIANT_COLUMNS)
+        values = values.reindex(columns=pd.MultiIndex.from_tuples(
+            variants, names=VARIANT_COLUMNS
+        ))
+        changes = percentage_change(values[baseline], values[candidate])
+        table = changes.unstack(SERIES_COLUMNS).sort_index(
+            axis=1, ascending=[True, True, False]
+        )
+        table.columns = [
+            f"{vus} VUs · {instance} · {layouts[mode]}"
+            for vus, instance, mode in table.columns
+        ]
+        table.index = [Path(str(script)).name for script in table.index]
+        table.loc["Mean"] = table.mean()
+        table = table.apply(lambda column: column.map(
+            lambda gain: "N/A" if pd.isna(gain) else f"{gain:+.1f}%"
+        ))
+        table.loc["Mean"] = table.loc["Mean"].map(
+            lambda value: f"**{value}**"
+        )
+        table = table.rename(index={"Mean": "**Mean**"})
+        table = table.rename_axis("Test").reset_index()
+        tables.append(f"### {metric}\n\n{table.to_markdown(index=False)}")
+    description = (
+        f"`{variant_label(baseline)}` vs "
+        f"`{variant_label(candidate)}`"
+    )
+    path.write_text(description + "\n\n" + "\n\n".join(tables) + "\n")
+    return True
+
+
 def write_svg(data, path):
-    versions = sorted(data["Version"].unique(), key=version_key)
-    data = data.assign(
-        _version=pd.Categorical(data["Version"], versions, ordered=True)
-    )
-    data = data.sort_values(["_version", "GHC RTS", "Extra config", "VUs"])
-    variants = list(
-        data[["Version", "GHC RTS", "Extra config"]]
-        .drop_duplicates()
-        .itertuples(index=False, name=None)
-    )
+    variants = get_variants(data)
     positions = {variant: index for index, variant in enumerate(variants)}
     data = data.assign(
         _position=[positions[variant] for variant in zip(
             data["Version"], data["GHC RTS"], data["Extra config"]
         )]
     )
-    panels = [
-        ("http_reqs (requests/second)", "http_reqs (req/s)"),
-        ("failed requests", "failed requests"),
-        ("p50 latency", "p50"),
-        ("p90 latency", "p90"),
-        ("p95 latency", "p95"),
-    ]
-    figure, axes = plt.subplots(5, 1, figsize=(18, 18), sharex=True)
+    data = data.sort_values(["_position", "VUs"])
+    figure, axes = plt.subplots(len(METRICS), 1, figsize=(18, 18), sharex=True)
     script = data["K6 script"].iloc[0]
     duration = math.floor(data["Duration"].iloc[0] / 1000)
     figure.suptitle(
@@ -91,9 +143,9 @@ def write_svg(data, path):
         f"Duration: {duration}s",
         parse_math=False,
     )
-    for axis, (title, column) in zip(axes, panels):
+    for axis, metric in zip(axes, METRICS):
         for (vus, instance, separate_pg), group in data.groupby(
-            ["VUs", "EC2", "Separate PG"], sort=True, dropna=False
+            SERIES_COLUMNS, sort=True, dropna=False
         ):
             marker, linestyle = {
                 "true": ("o", "-"),
@@ -101,25 +153,22 @@ def write_svg(data, path):
             }[separate_pg]
             axis.plot(
                 group["_position"],
-                group[column],
+                group[metric],
                 marker=marker,
                 linestyle=linestyle,
                 label=(
                     f"{vus} VUs | {instance} | separate PG: {separate_pg}"
                 ),
             )
-        axis.set_title(title)
+        axis.set_title(metric)
         # TODO some charts were showing negative labels
-        if column == "failed requests":
+        if metric == "failed requests":
             axis.set_ylim(bottom=0)
         axis.grid(axis="y", color="lightgray")
         axis.legend(loc="best")
     axes[-1].set_xticks(
         range(len(variants)),
-        [
-            f"{version} | {rts or 'default'} | {extra_config or 'default'}"
-            for version, rts, extra_config in variants
-        ],
+        [variant_label(variant) for variant in variants],
         rotation=60,
         ha="right",
         parse_math=False,
@@ -147,6 +196,11 @@ def main():
         print(f"Generated report: {svg_path}")
     write_markdown(data, markdown_path)
     print(f"Generated report: {markdown_path}")
+    vs_path = results_dir / f"{args.input.stem}-vs.md"
+    if write_vs_markdown(data, vs_path):
+        print(f"Generated report: {vs_path}")
+    else:
+        print(f"Skipped {vs_path}: expected exactly two configurations")
 
 
 if __name__ == "__main__":
