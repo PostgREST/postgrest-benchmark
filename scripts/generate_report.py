@@ -62,16 +62,16 @@ def write_svg(data, path):
     data = data.assign(
         _version=pd.Categorical(data["Version"], versions, ordered=True)
     )
-    data = data.sort_values(["_version", "GHC RTS", "VUs"])
+    data = data.sort_values(["_version", "GHC RTS", "Extra config", "VUs"])
     variants = list(
-        data[["Version", "GHC RTS"]].drop_duplicates().itertuples(
-            index=False, name=None
-        )
+        data[["Version", "GHC RTS", "Extra config"]]
+        .drop_duplicates()
+        .itertuples(index=False, name=None)
     )
     positions = {variant: index for index, variant in enumerate(variants)}
     data = data.assign(
         _position=[positions[variant] for variant in zip(
-            data["Version"], data["GHC RTS"]
+            data["Version"], data["GHC RTS"], data["Extra config"]
         )]
     )
     panels = [
@@ -84,11 +84,9 @@ def write_svg(data, path):
     figure, axes = plt.subplots(5, 1, figsize=(18, 18), sharex=True)
     script = data["K6 script"].iloc[0]
     duration = math.floor(data["Duration"].iloc[0] / 1000)
-    extra_config = " | ".join(data["Extra config"].unique())
     figure.suptitle(
         f"K6 script: {script} | "
-        f"Duration: {duration}s | "
-        f"Extra config: {extra_config}",
+        f"Duration: {duration}s",
         parse_math=False,
     )
     for axis, (title, column) in zip(axes, panels):
@@ -110,8 +108,8 @@ def write_svg(data, path):
     axes[-1].set_xticks(
         range(len(variants)),
         [
-            f"{version} | {rts or 'default'}"
-            for version, rts in variants
+            f"{version} | {rts or 'default'} | {extra_config or 'default'}"
+            for version, rts, extra_config in variants
         ],
         rotation=60,
         ha="right",
