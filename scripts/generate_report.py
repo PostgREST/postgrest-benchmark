@@ -27,6 +27,7 @@ def read_results(path):
                 "Version": Path(version).name if version else version,
                 "K6 script": record.get("K6_SCRIPT"),
                 "EC2": record.get("PGRSTBENCH_EC2_PGRST_INSTANCE_TYPE"),
+                "Separate PG": record["PGRSTBENCH_SEPARATE_PG"],
                 "GHC RTS": record.get("PGRSTBENCH_GHC_RTS") or "",
                 "Extra config": (
                     record.get("PGRSTBENCH_PGRST_EXTRA_CONFIG") or ""
@@ -90,14 +91,21 @@ def write_svg(data, path):
         parse_math=False,
     )
     for axis, (title, column) in zip(axes, panels):
-        for (vus, instance), group in data.groupby(
-            ["VUs", "EC2"], sort=True, dropna=False
+        for (vus, instance, separate_pg), group in data.groupby(
+            ["VUs", "EC2", "Separate PG"], sort=True, dropna=False
         ):
+            marker, linestyle = {
+                "true": ("o", "-"),
+                "false": ("s", "--"),
+            }[separate_pg]
             axis.plot(
                 group["_position"],
                 group[column],
-                marker="o",
-                label=f"{vus} VUs | {instance}",
+                marker=marker,
+                linestyle=linestyle,
+                label=(
+                    f"{vus} VUs | {instance} | separate PG: {separate_pg}"
+                ),
             )
         axis.set_title(title)
         # TODO some charts were showing negative labels
