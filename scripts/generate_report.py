@@ -24,7 +24,11 @@ def get_variants(data):
         data[VARIANT_COLUMNS].drop_duplicates().itertuples(
             index=False, name=None
         ),
-        key=lambda variant: (version_key(variant[0]), variant[1:]),
+        key=lambda variant: (
+            version_key(variant[0]),
+            tuple(map(int, re.findall(r"\d+", variant[1]))),
+            variant[1:],
+        ),
     )
 
 
