@@ -264,7 +264,7 @@ pkgs.mkShell {
     export PGRSTBENCH_PGRST_VER="v16.4"
     export PGRSTBENCH_PGRST_EXTRA_CONFIG=""
     export PGRSTBENCH_GHC_RTS=""
-    export PGRSTBENCH_EC2_PGRST_INSTANCE_TYPE="t3a.nano"
+    export PGRSTBENCH_EC2_PGRST_INSTANCE_TYPE="m5a.8xlarge"
     export PGRSTBENCH_EC2_DB_INSTANCE_TYPE="m5a.8xlarge"
     export PGRSTBENCH_EC2_CLIENT_INSTANCE_TYPE="m5a.8xlarge"
     export PGRSTBENCH_PG_LOGGING="false"
