@@ -9,7 +9,8 @@ import pandas as pd
 
 
 def version_key(version):
-    return tuple(int(part) for part in re.findall(r"\d+", version))
+    numbers = tuple(int(part) for part in re.findall(r"\d+", version))
+    return (not version.startswith("v"), numbers)
 
 
 def read_results(path):
