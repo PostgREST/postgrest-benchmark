@@ -3,7 +3,8 @@ import { b64encode } from 'k6/encoding';
 import exec from 'k6/execution';
 
 const SECRET = 'reallyreallyreallyreallyverysafe';
-const URL = 'http://pgrst';
+// PostgREST's URL; PGRSTBENCH_URL overrides the deployment's
+const URL = __ENV.PGRSTBENCH_URL || 'http://pgrst';
 let jwtSequence = 0;
 
 function base64UrlEncode(input) {
