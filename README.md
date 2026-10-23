@@ -270,6 +270,7 @@ Each summary has, under `PGRSTBENCH_LOCAL`, the CPU time PostgreSQL and PostgRES
 | `PGRSTBENCH_LOCAL_POOL` | by cores | PostgREST's pool |
 | `PGRSTBENCH_LOCAL_WARMUP` | 10s | how long k6 runs first, unmeasured |
 | `PGRSTBENCH_LOCAL_PORT` | 3000 | PostgREST's port, and the admin server's after it |
+| `PGRSTBENCH_LOCAL_PG_BIN` | | the directory of the PostgreSQL binaries to run instead of the deployment's |
 
 The defaults suit 64 CPUs: PostgreSQL needs about one and a half times PostgREST's cores, and k6 half. The other CPUs are left to the system. `PGRSTBENCH_GHC_RTS`, `PGRSTBENCH_PGRST_EXTRA_CONFIG` and `PGRSTBENCH_JWT_CACHE_ENABLED` apply as in the deployment.
 
@@ -285,6 +286,23 @@ postgrest-bench-local-vs 5 main=./postgrest-main new=./postgrest-new -- \
 ```bash
 postgrest-bench-local-report results/local.jsonl > results/local.md
 ```
+
+### Requests waiting for a pool connection
+
+`postgrest-bench-pool-overload` reproduces [PostgREST/postgrest#5336](https://github.com/PostgREST/postgrest/issues/5336): when more requests are in flight than `db-pool` has connections, the requests waiting for a connection use CPU, and more PostgREST cores make it worse. It runs `k6/GETSingleJWTCached.js` (a single-row GET with a JWT, drawn from a pool of 10000 tokens of which the JWT cache holds 8000, so about 80% of the requests hit it), 100 VUs for 10s after a warm-up of 5s, with:
+
+- PostgreSQL on 2 CPUs, so that connections are held long enough for requests to queue for them, and PostgREST on 2, 4, 8 and 16 cores (`+RTS -N<cores>`) with `db-pool = 20`;
+- PostgreSQL on 1 CPU and PostgREST on 4 cores, with `db-pool = 20`, so that 80 requests wait, and with `db-pool = 200`, so that none waits.
+
+```bash
+postgrest-bench-pool-overload ./postgrest results/pool-overload.jsonl > results/pool-overload.md
+```
+
+In the report, look at the requests per second and PostgREST's CPU per request: without the problem the CPU per request stays about the same from one row to the next. PostgreSQL's CPU shows how busy it is meanwhile.
+
+The measurements in the issue used PostgreSQL 18, and PostgREST built from `main`; the deployment's PostgreSQL is 14, so point `PGRSTBENCH_LOCAL_PG_BIN` at the `bin` directory of another version to use it.
+
+It needs the CPUs of a 64 CPU machine by default (PostgreSQL on 8-9, PostgREST from 32 on and k6 on 48-63). On a smaller machine set `PGRSTBENCH_LOCAL_PG_CPUS`, `PGRSTBENCH_LOCAL_PGRST_FIRST_CPU` and `PGRSTBENCH_LOCAL_K6_CPUS`, `PGRSTBENCH_OVERLOAD_CORES` to the cores to try (e.g. `"2 4 8"`), and `PGRSTBENCH_EC2_DB_INSTANCE_TYPE` to a PostgreSQL tuning that fits its memory (the default needs 32GB for shared buffers). `PGRSTBENCH_OVERLOAD_VUS`, `PGRSTBENCH_OVERLOAD_DURATION`, `PGRSTBENCH_OVERLOAD_TOKENS` and `PGRSTBENCH_OVERLOAD_CACHE` change the load, the JWT pool and the entries of the JWT cache (80% of the pool by default).
 
 ## Limitations
 

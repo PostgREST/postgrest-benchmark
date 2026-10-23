@@ -28,6 +28,11 @@ def summary_metrics(metrics, suffix=""):
     }
 
 
+def cpu_count(cpus):
+    """The number of CPUs in a list like 8-23,30"""
+    return sum(int(r.split("-")[-1]) - int(r.split("-")[0]) + 1 for r in cpus.split(","))
+
+
 def read(paths):
     runs = []
     for path in paths:
@@ -45,6 +50,8 @@ def read(paths):
             total["dropped iterations"] = metrics.get("dropped_iterations", {}).get("values", {}).get("count", 0)
             total["PostgREST CPU µs/req"] = local["pgrst"]["cpu_ms"] * 1000 / count
             total["PostgreSQL CPU µs/req"] = local["pg"]["cpu_ms"] * 1000 / count
+            total["PostgreSQL busy, % of its CPUs"] = (
+                local["pg"]["cpu_ms"] / record["state"]["testRunDurationMs"] / cpu_count(local["cpus"]["pg"]) * 100)
             for side, label in (("pgrst", "PostgREST"), ("pg", "PostgreSQL")):
                 instructions = local[side].get("instructions")
                 total[f"{label} kinstructions/req"] = instructions / count / 1000 if instructions else None

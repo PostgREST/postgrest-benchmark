@@ -136,6 +136,11 @@ let
           done
         done
       '';
+  poolOverload = pkgs.writeShellApplication {
+    name = prefix + "-pool-overload";
+    runtimeInputs = [ local localReport pkgs.coreutils ];
+    text = builtins.readFile ./local/pool-overload.sh;
+  };
   localReport =
     pkgs.writeShellScriptBin (prefix + "-local-report")
       ''
@@ -330,6 +335,7 @@ pkgs.mkShell {
   ] ++ pkgs.lib.optionals pkgs.stdenv.isLinux [
     local
     localVs
+    poolOverload
   ];
   shellHook = ''
     export NIX_PATH="nixpkgs=${nixpkgs}:."

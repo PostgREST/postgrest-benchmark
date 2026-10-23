@@ -30,6 +30,11 @@ db_instance=${PGRSTBENCH_EC2_DB_INSTANCE_TYPE:-m5a.8xlarge}
 # sslmode, to a PostgreSQL that takes TLS, unless PGRSTBENCH_LOCAL_DB_SSL=off
 sslmode=${PGRSTBENCH_LOCAL_DB_SSLMODE:-}
 db_ssl=${PGRSTBENCH_LOCAL_DB_SSL:-on}
+# Set, the directory of the PostgreSQL binaries to run instead of the
+# deployment's, e.g. those of another version
+if [ -n "${PGRSTBENCH_LOCAL_PG_BIN:-}" ]; then
+  PATH="$PGRSTBENCH_LOCAL_PG_BIN:$PATH"
+fi
 
 # The pool the deployment gives an m5a instance with as many cores: it has two
 # vCPUs, threads of one core, per core
@@ -162,6 +167,7 @@ k6_command() {
     --env POSTGREST_VERSION="$bin"
     --env PGRSTBENCH_GHC_RTS="${PGRSTBENCH_GHC_RTS:-}"
     --env PGRSTBENCH_PGRST_EXTRA_CONFIG="${PGRSTBENCH_PGRST_EXTRA_CONFIG:-}"
+    --env PGRSTBENCH_JWT_POOL_SIZE="${PGRSTBENCH_JWT_POOL_SIZE:-}"
     "$@" "$tmp/script.js")
 }
 
