@@ -2,6 +2,7 @@ import argparse
 import json
 import math
 import re
+from itertools import combinations
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -89,44 +90,48 @@ def percentage_change(baseline, candidate):
 
 def write_vs_markdown(data, path):
     variants = get_variants(data)
-    if len(variants) != 2:
+    if len(variants) < 2:
         return False
 
-    baseline, candidate = variants
     layouts = {"true": "Separate PG", "false": "Colocated PG"}
     averages = data.groupby(
         ["K6 script"] + SERIES_COLUMNS + VARIANT_COLUMNS, dropna=False
     )[METRICS].mean()
-    tables = []
-    for metric in METRICS:
-        values = averages[metric].unstack(VARIANT_COLUMNS)
-        values = values.reindex(columns=pd.MultiIndex.from_tuples(
-            variants, names=VARIANT_COLUMNS
-        ))
-        changes = percentage_change(values[baseline], values[candidate])
-        table = changes.unstack(SERIES_COLUMNS).sort_index(
-            axis=1, ascending=[True, True, False]
+    comparisons = []
+    for baseline, candidate in combinations(variants, 2):
+        tables = []
+        for metric in METRICS:
+            values = averages[metric].unstack(VARIANT_COLUMNS)
+            values = values.reindex(columns=pd.MultiIndex.from_tuples(
+                variants, names=VARIANT_COLUMNS
+            ))
+            changes = percentage_change(values[baseline], values[candidate])
+            table = changes.unstack(SERIES_COLUMNS).sort_index(
+                axis=1, ascending=[True, True, False]
+            )
+            table.columns = [
+                f"{vus} VUs · {instance} · {layouts[mode]}"
+                for vus, instance, mode in table.columns
+            ]
+            table.index = [Path(str(script)).name for script in table.index]
+            table.loc["Mean"] = table.mean()
+            table = table.apply(lambda column: column.map(
+                lambda gain: "N/A" if pd.isna(gain) else f"{gain:+.1f}%"
+            ))
+            table.loc["Mean"] = table.loc["Mean"].map(
+                lambda value: f"**{value}**"
+            )
+            table = table.rename(index={"Mean": "**Mean**"})
+            table = table.rename_axis("Test").reset_index()
+            tables.append(
+                f"### {metric}\n\n{table.to_markdown(index=False)}"
+            )
+        comparisons.append(
+            f"## `{variant_label(baseline)}` vs "
+            f"`{variant_label(candidate)}`\n\n"
+            + "\n\n".join(tables)
         )
-        table.columns = [
-            f"{vus} VUs · {instance} · {layouts[mode]}"
-            for vus, instance, mode in table.columns
-        ]
-        table.index = [Path(str(script)).name for script in table.index]
-        table.loc["Mean"] = table.mean()
-        table = table.apply(lambda column: column.map(
-            lambda gain: "N/A" if pd.isna(gain) else f"{gain:+.1f}%"
-        ))
-        table.loc["Mean"] = table.loc["Mean"].map(
-            lambda value: f"**{value}**"
-        )
-        table = table.rename(index={"Mean": "**Mean**"})
-        table = table.rename_axis("Test").reset_index()
-        tables.append(f"### {metric}\n\n{table.to_markdown(index=False)}")
-    description = (
-        f"`{variant_label(baseline)}` vs "
-        f"`{variant_label(candidate)}`"
-    )
-    path.write_text(description + "\n\n" + "\n\n".join(tables) + "\n")
+    path.write_text("\n\n".join(comparisons))
     return True
 
 
@@ -204,7 +209,7 @@ def main():
     if write_vs_markdown(data, vs_path):
         print(f"Generated report: {vs_path}")
     else:
-        print(f"Skipped {vs_path}: expected exactly two configurations")
+        print(f"Skipped {vs_path}: expected at least two configurations")
 
 
 if __name__ == "__main__":
