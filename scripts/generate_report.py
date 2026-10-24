@@ -94,12 +94,14 @@ def write_vs_markdown(data, path):
         return False
 
     layouts = {"true": "Separate PG", "false": "Colocated PG"}
+    summary_metrics = ["http_reqs (req/s)", "p50", "p95"]
     averages = data.groupby(
         ["K6 script"] + SERIES_COLUMNS + VARIANT_COLUMNS, dropna=False
     )[METRICS].mean()
     comparisons = []
     for baseline, candidate in combinations(variants, 2):
         tables = []
+        summary = []
         for metric in METRICS:
             values = averages[metric].unstack(VARIANT_COLUMNS)
             values = values.reindex(columns=pd.MultiIndex.from_tuples(
@@ -118,6 +120,8 @@ def write_vs_markdown(data, path):
             table = table.apply(lambda column: column.map(
                 lambda gain: "N/A" if pd.isna(gain) else f"{gain:+.1f}%"
             ))
+            if metric in summary_metrics:
+                summary.append(table.loc["Mean"].rename(metric))
             table.loc["Mean"] = table.loc["Mean"].map(
                 lambda value: f"**{value}**"
             )
@@ -129,7 +133,9 @@ def write_vs_markdown(data, path):
         comparisons.append(
             f"## `{variant_label(baseline)}` vs "
             f"`{variant_label(candidate)}`\n\n"
-            + "\n\n".join(tables)
+            + "### Summary\n\n"
+            + pd.DataFrame(summary).rename_axis("Mean change").to_markdown()
+            + "\n\n" + "\n\n".join(tables)
         )
     path.write_text("\n\n".join(comparisons))
     return True
