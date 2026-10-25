@@ -145,14 +145,10 @@ let
         set -euo pipefail
 
         for rts in \
-          default \
-          '-N4' \
-          '-N8' \
-          '-N16' \
-          '-N32'; do
-          if [ "$rts" = default ]; then
-            rts=""
-          fi
+          '-N4 -A64m' \
+          '-N8 -A64m' \
+          '-N16 -A64m' \
+          '-N32 -A64m'; do
           export PGRSTBENCH_GHC_RTS="$rts"
           echo -e "\nUsing RTS settings: $rts for pgrst\n" >&2
 
