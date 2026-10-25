@@ -23883,5 +23883,18 @@ create or replace function sleep(seconds double precision default 5) returns voi
   select pg_sleep(seconds);
 $$ language sql;
 
+-- For the scripts with large bodies
+create or replace function text_length(body text) returns int as $$
+  select length(body);
+$$ language sql immutable;
+
+create or replace function bytea_length(bytea) returns int as $$
+  select length($1);
+$$ language sql immutable;
+
+create or replace function large_text(size int) returns text as $$
+  select repeat('x', size);
+$$ language sql immutable;
+
 -- Ensure postgREST catches up the whole schema
 NOTIFY pgrst, 'reload schema';

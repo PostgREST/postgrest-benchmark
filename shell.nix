@@ -66,6 +66,86 @@ let
           { cat k6/private/utils.js; cat "$script"; } | nixops ssh -d ${prefix} client "$remote_command"
         done
       '';
+  k6Mixed =
+    pkgs.writeShellScriptBin (prefix + "-k6-mixed")
+      ''
+        set -euo pipefail
+
+        if [ "$#" -lt 3 ]; then
+          echo "usage: ${prefix}-k6-mixed VUS DURATION SCRIPT..." >&2
+          exit 1
+        fi
+
+        vus=$1
+        duration=$2
+        shift 2
+
+        echo -e "\nRunning k6 with $vus vus for $duration, all at once: $*" >&2
+        # SSH joins command arguments into a string for the remote shell
+        printf -v remote_command '%q ' k6 run -q \
+          --env K6_SCRIPT=mixed \
+          --env POSTGREST_VERSION="''${PGRSTBENCH_PGRST_VER:-}" \
+          --env PGRSTBENCH_EC2_PGRST_INSTANCE_TYPE="''${PGRSTBENCH_EC2_PGRST_INSTANCE_TYPE:-}" \
+          --env PGRSTBENCH_GHC_RTS="''${PGRSTBENCH_GHC_RTS:-}" \
+          --env PGRSTBENCH_PGRST_EXTRA_CONFIG="''${PGRSTBENCH_PGRST_EXTRA_CONFIG:-}" -
+
+        python3 scripts/mixed_script.py --vus "$vus" --duration "$duration" \
+          ''${PGRSTBENCH_K6_RATE:+--rate "$PGRSTBENCH_K6_RATE"} "$@" \
+        | nixops ssh -d ${prefix} client "$remote_command"
+      '';
+  local =
+    pkgs.writeShellApplication {
+      name = prefix + "-local";
+      # the PostgreSQL the deployment runs
+      runtimeInputs = [ pkgs.postgresql_14 pkgs.k6 pkgs.jq pkgs.util-linux pkgs.curl pkgs.openssl python ];
+      text = ''
+        TUNING=${pkgs.writeText "tuning.json" (builtins.toJSON (pkgs.lib.mapAttrs (_: instance: instance.postgresql) (import ./tuning.nix)))}
+        POOLS=${pkgs.writeText "pools.json" (builtins.toJSON (pkgs.lib.mapAttrs (_: instance: instance.dbPool) (import ./tuning.nix)))}
+        SAMPLE_DB=${./sql/chinook.sql}
+      '' + builtins.readFile ./local/run.sh;
+    };
+  # Every round runs the command once per binary, starting with a different
+  # one, so that a drift over the rounds doesn't favour any
+  localVs =
+    pkgs.writeShellScriptBin (prefix + "-local-vs")
+      ''
+        set -euo pipefail
+
+        if [ "$#" -lt 4 ]; then
+          echo "usage: ${prefix}-local-vs ROUNDS NAME=BINARY... -- COMMAND..." >&2
+          exit 1
+        fi
+
+        rounds=$1
+        shift
+        binaries=()
+        while [ "$1" != -- ]; do
+          binaries+=("$1")
+          shift
+        done
+        shift
+
+        count=''${#binaries[@]}
+        for round in $(seq 1 "$rounds"); do
+          for offset in $(seq 0 $((count - 1))); do
+            binary=''${binaries[$(( (round - 1 + offset) % count ))]}
+            name=''${binary%%=*}
+            echo -e "\nRound $round of $rounds: $name\n" >&2
+            PGRSTBENCH_PGRST_VER=$(${pkgs.coreutils}/bin/realpath -e -- "''${binary#*=}") \
+            PGRSTBENCH_LOCAL_NAME=$name PGRSTBENCH_LOCAL_ROUND=$round "$@"
+          done
+        done
+      '';
+  poolOverload = pkgs.writeShellApplication {
+    name = prefix + "-pool-overload";
+    runtimeInputs = [ local localReport pkgs.coreutils ];
+    text = builtins.readFile ./local/pool-overload.sh;
+  };
+  localReport =
+    pkgs.writeShellScriptBin (prefix + "-local-report")
+      ''
+        exec ${python}/bin/python3 ${./scripts/local_report.py} "$@"
+      '';
   k6VariedVus =
     pkgs.writeShellScriptBin (prefix + "-k6-vary-vus")
       ''
@@ -238,6 +318,7 @@ pkgs.mkShell {
     deploy
     info
     k6
+    k6Mixed
     k6VariedVus
     ssh
     destroy
@@ -250,6 +331,11 @@ pkgs.mkShell {
     executeVaryPostgrestVersions
     executePostgrestVs
     generateNixOSAMIFile
+    localReport
+  ] ++ pkgs.lib.optionals pkgs.stdenv.isLinux [
+    local
+    localVs
+    poolOverload
   ];
   shellHook = ''
     export NIX_PATH="nixpkgs=${nixpkgs}:."

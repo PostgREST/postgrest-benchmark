@@ -111,6 +111,26 @@ $ postgrest-bench-k6 20 10s k6/{GETSingle.js,GETSingleJWT.js}
 
 There are different scripts on `k6/` which test different PostgREST requests.
 
+The `Large` ones send or get bodies of about 2 MB, past PostgREST's request and response stream thresholds: JSON with `?columns=` and a raw body sent to a function, every track with what it's in, and one large value from a function.
+
+### All scripts at once
+
+`postgrest-bench-k6-mixed` runs the scripts at the same time, each as a k6 scenario, splitting the VUs among them:
+
+```
+$ postgrest-bench-k6-mixed 100 30s k6/*.js
+```
+
+Every request is tagged with its scenario, so the summary has each scenario's requests, latencies and failures, as `http_reqs{scenario:GETSingle}`, `http_req_duration{scenario:GETSingle}` and so on, besides the totals of the mix.
+
+By default every scenario's VUs send requests as fast as they can. To have each scenario run at a constant rate instead, set the total iterations per second, which are split evenly among the scenarios:
+
+```
+$ PGRSTBENCH_K6_RATE=2000 postgrest-bench-k6-mixed 100 30s k6/*.js
+```
+
+A scenario whose VUs can't keep up drops iterations, counted in `dropped_iterations`.
+
 ## Pgbench
 
 pgbench also runs on the client instance, you can get its output with:
@@ -226,6 +246,63 @@ postgrest-bench-pgrst-vs ./bin/pipeline-pgrst \
 postgrest-bench-k6-vary-vus 1m k6/* \
 > results/comparison.jsonl
 ```
+
+## On one machine
+
+To compare binaries closely, a single large Linux machine (e.g. a `c7g.metal`) keeps the noise of shared instances and the network out of the results. `postgrest-bench-local` runs PostgreSQL, PostgREST and k6 there, each pinned to CPUs of its own, with the deployment's settings: the database of an `m5a.8xlarge` (`PGRSTBENCH_EC2_DB_INSTANCE_TYPE`), with the sample database, and PostgREST with the pool of an m5a instance with as many cores. It starts both from scratch, warms up, and then runs k6 for each number of VUs:
+
+```bash
+export PGRSTBENCH_PGRST_VER=/path/to/postgrest
+postgrest-bench-local 10,50,100 30s k6/*.js > results/local.jsonl
+
+# or all scripts at once, as with postgrest-bench-k6-mixed
+PGRSTBENCH_K6_MIXED=true postgrest-bench-local 10,50,100 30s k6/*.js
+```
+
+Each summary has, under `PGRSTBENCH_LOCAL`, the CPU time PostgreSQL and PostgREST used on their CPUs while k6 ran, the instructions they executed, if `perf` can count them, and PostgREST's peak RSS.
+
+| Variable | Default | |
+|---|---|---|
+| `PGRSTBENCH_LOCAL_PGRST_CORES` | 2 | PostgREST's cores, and its `-N` |
+| `PGRSTBENCH_LOCAL_PGRST_FIRST_CPU` | 32 | the first of PostgREST's CPUs |
+| `PGRSTBENCH_LOCAL_PG_CPUS` | 8-31 | PostgreSQL's CPUs |
+| `PGRSTBENCH_LOCAL_K6_CPUS` | 40-63 | k6's CPUs |
+| `PGRSTBENCH_LOCAL_POOL` | by cores | PostgREST's pool |
+| `PGRSTBENCH_LOCAL_WARMUP` | 10s | how long k6 runs first, unmeasured |
+| `PGRSTBENCH_LOCAL_PORT` | 3000 | PostgREST's port, and the admin server's after it |
+| `PGRSTBENCH_LOCAL_PG_BIN` | | the directory of the PostgreSQL binaries to run instead of the deployment's |
+
+The defaults suit 64 CPUs: PostgreSQL needs about one and a half times PostgREST's cores, and k6 half. The other CPUs are left to the system. `PGRSTBENCH_GHC_RTS`, `PGRSTBENCH_PGRST_EXTRA_CONFIG` and `PGRSTBENCH_JWT_CACHE_ENABLED` apply as in the deployment.
+
+To compare binaries, `postgrest-bench-local-vs` runs a command once per binary in each round, starting each round with a different binary, so that a drift over time doesn't favour any. It names each summary's binary and round:
+
+```bash
+postgrest-bench-local-vs 5 main=./postgrest-main new=./postgrest-new -- \
+  postgrest-bench-local 10,50,100 30s k6/*.js > results/local.jsonl
+```
+
+`postgrest-bench-local-report` turns the summaries into markdown tables: for each script, VUs and cores, the medians over the rounds, with their ranges, of the requests per second, latencies, failures, CPU time and instructions per request, and peak RSS; the requests per second and p95 latency of every scenario of a mixed run; and how the requests per second grow with PostgREST's cores. The first binary is the baseline the others are compared to:
+
+```bash
+postgrest-bench-local-report results/local.jsonl > results/local.md
+```
+
+### Requests waiting for a pool connection
+
+`postgrest-bench-pool-overload` reproduces [PostgREST/postgrest#5336](https://github.com/PostgREST/postgrest/issues/5336): when more requests are in flight than `db-pool` has connections, the requests waiting for a connection use CPU, and more PostgREST cores make it worse. It runs `k6/GETSingleJWTCached.js` (a single-row GET with a JWT, drawn from a pool of 10000 tokens of which the JWT cache holds 8000, so about 80% of the requests hit it), 100 VUs for 10s after a warm-up of 5s, with:
+
+- PostgreSQL on 2 CPUs, so that connections are held long enough for requests to queue for them, and PostgREST on 2, 4, 8 and 16 cores (`+RTS -N<cores>`) with `db-pool = 20`;
+- PostgreSQL on 1 CPU and PostgREST on 4 cores, with `db-pool = 20`, so that 80 requests wait, and with `db-pool = 200`, so that none waits.
+
+```bash
+postgrest-bench-pool-overload ./postgrest results/pool-overload.jsonl > results/pool-overload.md
+```
+
+In the report, look at the requests per second and PostgREST's CPU per request: without the problem the CPU per request stays about the same from one row to the next. PostgreSQL's CPU shows how busy it is meanwhile.
+
+The measurements in the issue used PostgreSQL 18, and PostgREST built from `main`; the deployment's PostgreSQL is 14, so point `PGRSTBENCH_LOCAL_PG_BIN` at the `bin` directory of another version to use it.
+
+It needs the CPUs of a 64 CPU machine by default (PostgreSQL on 8-9, PostgREST from 32 on and k6 on 48-63). On a smaller machine set `PGRSTBENCH_LOCAL_PG_CPUS`, `PGRSTBENCH_LOCAL_PGRST_FIRST_CPU` and `PGRSTBENCH_LOCAL_K6_CPUS`, `PGRSTBENCH_OVERLOAD_CORES` to the cores to try (e.g. `"2 4 8"`), and `PGRSTBENCH_EC2_DB_INSTANCE_TYPE` to a PostgreSQL tuning that fits its memory (the default needs 32GB for shared buffers). `PGRSTBENCH_OVERLOAD_VUS`, `PGRSTBENCH_OVERLOAD_DURATION`, `PGRSTBENCH_OVERLOAD_TOKENS` and `PGRSTBENCH_OVERLOAD_CACHE` change the load, the JWT pool and the entries of the JWT cache (80% of the pool by default).
 
 ## Limitations
 
