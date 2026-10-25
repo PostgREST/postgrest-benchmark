@@ -27,7 +27,7 @@ let
         if test $info -eq 1
         then
           echo "Creating deployment..." >&2
-          nixops create -d ${prefix}
+          nixops create -d ${prefix} >&2
         fi
 
         nixops deploy -k -d ${prefix} --allow-reboot --confirm
