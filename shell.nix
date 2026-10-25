@@ -10,6 +10,12 @@ let
   prefix = global.prefix;
   postgrest = pkgs.callPackage ./postgrest/postgrest.nix {};
   postgrestVersions = pkgs.lib.sort pkgs.lib.versionOlder (builtins.attrNames postgrest.versions);
+  defaultGhcRts = ''
+    case "$PGRSTBENCH_EC2_PGRST_INSTANCE_TYPE" in
+      t3a*) export PGRSTBENCH_GHC_RTS="-A16m" ;;
+      *) export PGRSTBENCH_GHC_RTS="-A64m" ;;
+    esac
+  '';
   deploy =
     pkgs.writeShellScriptBin (prefix + "-deploy")
       ''
@@ -100,6 +106,7 @@ let
 
         for instance in 't3a.nano' 't3a.micro' 't3a.small' 't3a.medium' 't3a.large'; do
           export PGRSTBENCH_EC2_PGRST_INSTANCE_TYPE="$instance"
+          ${defaultGhcRts}
 
           echo -e "\nUsing a $instance EC2 type for pgrst\n" >&2
 
@@ -118,6 +125,7 @@ let
 
         for instance in 't3a.xlarge' 't3a.2xlarge' 'm5a.4xlarge' 'm5a.8xlarge' 'm5a.12xlarge'; do
           export PGRSTBENCH_EC2_PGRST_INSTANCE_TYPE="$instance"
+          ${defaultGhcRts}
 
           echo -e "\nUsing a $instance EC2 type for pgrst\n" >&2
 
@@ -263,8 +271,8 @@ pkgs.mkShell {
 
     export PGRSTBENCH_PGRST_VER="v16.4"
     export PGRSTBENCH_PGRST_EXTRA_CONFIG=""
-    export PGRSTBENCH_GHC_RTS=""
     export PGRSTBENCH_EC2_PGRST_INSTANCE_TYPE="m5a.8xlarge"
+    ${defaultGhcRts}
     export PGRSTBENCH_EC2_DB_INSTANCE_TYPE="m5a.8xlarge"
     export PGRSTBENCH_EC2_CLIENT_INSTANCE_TYPE="m5a.8xlarge"
     export PGRSTBENCH_PG_LOGGING="false"

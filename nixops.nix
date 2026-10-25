@@ -154,7 +154,6 @@ in {
     {
       postgrest =
       let
-        defaultRTS = tuning.${config.deployment.ec2.instanceType}.defaultRTS;
         pgHost =
           if env.withSeparatePg then "pg"
           else if env.withUnixSocket then ""
@@ -199,7 +198,7 @@ in {
         after       = [ "postgresql.service" ];
         wantedBy    = [ "multi-user.target" ];
         serviceConfig = {
-          ExecStart = "${postgrest}/bin/postgrest ${pgrstConf} +RTS ${defaultRTS} ${env.ghcRts} -RTS";
+          ExecStart = "${postgrest}/bin/postgrest ${pgrstConf} +RTS ${env.ghcRts} -RTS";
           Restart = "always";
         } // pkgs.lib.optionalAttrs (env.withMaxFds) {
           LimitNOFILE = maxFileDescriptors;

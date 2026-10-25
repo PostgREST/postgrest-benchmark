@@ -3,7 +3,6 @@
 {
   "t3a.nano" = {
     dbPool = 10;
-    defaultRTS = "-A16m";
     postgresql = {
       max_connections = 40;
       shared_buffers = "128MB";
@@ -30,7 +29,6 @@
   };
   "t3a.micro" = {
     dbPool = 15;
-    defaultRTS = "-A16m";
     postgresql = {
       max_connections = 60;
       shared_buffers = "256MB";
@@ -56,7 +54,6 @@
   };
   "t3a.small" = {
     dbPool = 20;
-    defaultRTS = "-A16m";
     postgresql = {
       max_connections = 80;
       shared_buffers = "512MB";
@@ -82,7 +79,6 @@
   };
   "t3a.medium" = {
     dbPool = 30;
-    defaultRTS = "-A16m";
     postgresql = {
       max_connections = 120;
       shared_buffers = "1GB";
@@ -108,7 +104,6 @@
   };
   "t3a.large" = {
     dbPool = 40;
-    defaultRTS = "-A16m";
     postgresql = {
       max_connections = 160;
       shared_buffers = "2GB";
@@ -134,7 +129,6 @@
   };
   "t3a.xlarge" = {
     dbPool = 40;
-    defaultRTS = "-A16m";
     postgresql = {
       max_connections = 200;
       shared_buffers = "4GB";
@@ -153,7 +147,6 @@
   };
   "t3a.2xlarge" = {
     dbPool = 50;
-    defaultRTS = "-A16m";
     postgresql = {
       max_connections = 200;
       shared_buffers = "8GB";
@@ -172,7 +165,6 @@
   };
   "m5a.4xlarge" = {
     dbPool = 120;
-    defaultRTS = "-A16m";
     postgresql = {
       max_connections = 480;
       shared_buffers = "16GB";
@@ -198,7 +190,6 @@
   };
   "m5a.8xlarge" = {
     dbPool = 150;
-    defaultRTS = "-A64m";
     postgresql = {
       max_connections = 600;
       shared_buffers = "32GB";
@@ -224,7 +215,6 @@
   };
   "m5a.12xlarge" = {
     dbPool = 200;
-    defaultRTS = "-A64m";
     postgresql = {
       max_connections = 800;
       shared_buffers = "48GB";
@@ -250,7 +240,6 @@
   };
   "m5a.16xlarge" = {
     dbPool = 250;
-    defaultRTS = "-A64m";
     postgresql = {
       max_connections = 1000;
       shared_buffers = "64GB";
