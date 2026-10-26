@@ -1,6 +1,7 @@
 import http from 'k6/http'
 
 export default function () {
+  if (largeBody()) return;
   const body = { last_update: 'now' }
   const params = {
     headers: {

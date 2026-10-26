@@ -4,6 +4,8 @@ import exec from 'k6/execution';
 
 const SECRET = 'reallyreallyreallyreallyverysafe';
 const URL = 'http://pgrst';
+const LARGE_SHARE = Number(__ENV.PGRSTBENCH_LARGE_SHARE || 0);
+const HUGE_SHARE = Number(__ENV.PGRSTBENCH_HUGE_SHARE || 0);
 let jwtSequence = 0;
 
 function base64UrlEncode(input) {
@@ -52,6 +54,33 @@ function truncateEmployee() {
   }
 }
 
+// In a share of iterations, send or get a large body instead of the script's request.
+// Returns true when it did. Sizes are MiB, weighted toward small; the 64 MiB ones are rare.
+function largeBody() {
+  const r = Math.random();
+  let size;
+  if (r < HUGE_SHARE) {
+    size = 64;
+  } else if (r < HUGE_SHARE + LARGE_SHARE) {
+    size = [1, 1, 1, 4, 4, 16][Math.floor(Math.random() * 6)];
+  } else {
+    return false;
+  }
+
+  const tags = { body: 'large', size_mib: size };
+  if (size === 64 || Math.random() < 0.5) {
+    // k6 doesn't keep the response body
+    http.get(`${URL}/large_body?size_mib=eq.${size}`, { tags, responseType: 'none' });
+  } else {
+    const body = JSON.stringify({ body: 'x'.repeat(size * 1024 * 1024) });
+    http.post(`${URL}/rpc/body_length`, body, {
+      tags,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+  return true;
+}
+
 function handleSummary(data) {
   delete data.setup_data;
   data.K6_SCRIPT = __ENV.K6_SCRIPT || null;
@@ -62,6 +91,8 @@ function handleSummary(data) {
   data.PGRSTBENCH_GHC_RTS = __ENV.PGRSTBENCH_GHC_RTS || null;
   data.PGRSTBENCH_PGRST_EXTRA_CONFIG =
     __ENV.PGRSTBENCH_PGRST_EXTRA_CONFIG || null;
+  data.PGRSTBENCH_LARGE_SHARE = __ENV.PGRSTBENCH_LARGE_SHARE || null;
+  data.PGRSTBENCH_HUGE_SHARE = __ENV.PGRSTBENCH_HUGE_SHARE || null;
 
   return {
     stdout: JSON.stringify(data) + '\n'

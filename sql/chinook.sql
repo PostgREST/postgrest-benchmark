@@ -23883,5 +23883,19 @@ create or replace function sleep(seconds double precision default 5) returns voi
   select pg_sleep(seconds);
 $$ language sql;
 
+-- Large bodies: rows to get and a function to post values to, in a few fixed sizes
+create table large_body (
+  size_mib int primary key,
+  body text not null
+);
+
+insert into large_body
+select size_mib, repeat('x', size_mib * 1024 * 1024)
+from (values (1), (4), (16), (64)) as sizes(size_mib);
+
+create or replace function body_length(body text) returns int as $$
+  select length(body);
+$$ language sql immutable;
+
 -- Ensure postgREST catches up the whole schema
 NOTIFY pgrst, 'reload schema';
