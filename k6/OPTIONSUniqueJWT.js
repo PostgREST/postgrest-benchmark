@@ -10,6 +10,7 @@ export const options = {
 
 // Generate a fresh JWT for every request, including during long benchmark runs.
 export default function() {
+  if (largeBody()) return;
   const params = {
     headers: {
       Authorization: `Bearer ${generateJWT({ unique: true })}`,

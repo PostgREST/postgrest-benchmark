@@ -2,6 +2,7 @@ import { check, group, sleep } from 'k6';
 import http from 'k6/http';
 
 export default function() {
+  if (largeBody()) return;
   let body = JSON.stringify(Array(20).fill({
     employee_id: __ITER + 100
   , first_name:  'Virtual ' + __ITER

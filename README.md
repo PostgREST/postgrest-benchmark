@@ -111,6 +111,12 @@ $ postgrest-bench-k6 20 10s k6/{GETSingle.js,GETSingleJWT.js}
 
 There are different scripts on `k6/` which test different PostgREST requests.
 
+Every script can also send or get large bodies in a small share of its iterations, to see how PostgREST handles them. `PGRSTBENCH_LARGE_SHARE` is the share of iterations that do it with a 1, 4 or 16 MiB body (the smaller more often), as a request or a response. `PGRSTBENCH_HUGE_SHARE` is the share that get a 64 MiB response. Both default to 0, so nothing changes unless you set them:
+
+```
+$ PGRSTBENCH_LARGE_SHARE=0.02 PGRSTBENCH_HUGE_SHARE=0.001 postgrest-bench-k6 20 30s k6/GETSingle.js
+```
+
 ## Pgbench
 
 pgbench also runs on the client instance, you can get its output with:

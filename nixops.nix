@@ -237,6 +237,8 @@ in {
               listen 80 default_server;
               listen [::]:80 default_server;
 
+              client_max_body_size 32m; # request bodies up to 16 MiB, plus their JSON
+
               location / {
                 proxy_set_header  Connection "";
                 proxy_set_header  Accept-Encoding  "";

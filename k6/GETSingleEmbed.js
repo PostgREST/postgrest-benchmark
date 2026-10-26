@@ -3,6 +3,7 @@ import { check, group, sleep } from 'k6';
 import http from 'k6/http';
 
 export default function() {
+  if (largeBody()) return;
   let id =  Math.floor((Math.random() * 347) + 1);
   let res = http.get(URL + "/album?select=*,track(*,genre(*))&artist_id=eq." + id);
 }

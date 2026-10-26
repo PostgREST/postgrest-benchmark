@@ -65,6 +65,8 @@ let
             --env PGRSTBENCH_SEPARATE_PG="''${PGRSTBENCH_SEPARATE_PG:-}" \
             --env PGRSTBENCH_GHC_RTS="''${PGRSTBENCH_GHC_RTS:-}" \
             --env PGRSTBENCH_PGRST_EXTRA_CONFIG="''${PGRSTBENCH_PGRST_EXTRA_CONFIG:-}" \
+            --env PGRSTBENCH_LARGE_SHARE="''${PGRSTBENCH_LARGE_SHARE:-}" \
+            --env PGRSTBENCH_HUGE_SHARE="''${PGRSTBENCH_HUGE_SHARE:-}" \
             --duration "$duration" \
             --vus "$vus" -
 
