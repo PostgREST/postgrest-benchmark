@@ -21,7 +21,9 @@ def version_key(version):
 
 def get_variants(data):
     return sorted(
-        data[VARIANT_COLUMNS].drop_duplicates().itertuples(index=False, name=None),
+        data[VARIANT_COLUMNS]
+        .drop_duplicates()
+        .itertuples(index=False, name=None),
         key=lambda variant: (
             version_key(variant[0]),
             tuple(map(int, re.findall(r"\d+", variant[1]))),
@@ -53,9 +55,15 @@ def read_results(path):
                     "EC2": record.get("PGRSTBENCH_EC2_PGRST_INSTANCE_TYPE"),
                     "Separate PG": record["PGRSTBENCH_SEPARATE_PG"],
                     "GHC RTS": record.get("PGRSTBENCH_GHC_RTS") or "",
-                    "Extra config": (record.get("PGRSTBENCH_PGRST_EXTRA_CONFIG") or ""),
-                    "VUs": int(metrics.get("vus_max", metrics["vus"])["values"]["max"]),
-                    "http_reqs (req/s)": metrics["http_reqs"]["values"]["rate"],
+                    "Extra config": (
+                        record.get("PGRSTBENCH_PGRST_EXTRA_CONFIG") or ""
+                    ),
+                    "VUs": int(
+                        metrics.get("vus_max", metrics["vus"])["values"]["max"]
+                    ),
+                    "http_reqs (req/s)": metrics["http_reqs"]["values"][
+                        "rate"
+                    ],
                     "failed requests": failed.get("passes", 0),
                     "p50": duration["med"],
                     "p90": duration["p(90)"],
@@ -98,7 +106,9 @@ def write_vs_markdown(data, path):
         for metric in METRICS:
             values = averages[metric].unstack(VARIANT_COLUMNS)
             values = values.reindex(
-                columns=pd.MultiIndex.from_tuples(variants, names=VARIANT_COLUMNS)
+                columns=pd.MultiIndex.from_tuples(
+                    variants, names=VARIANT_COLUMNS
+                )
             )
             changes = percentage_change(values[baseline], values[candidate])
             table = changes.unstack(SERIES_COLUMNS).sort_index(
@@ -117,7 +127,9 @@ def write_vs_markdown(data, path):
             )
             if metric in summary_metrics:
                 summary.append(table.loc["Mean"].rename(metric))
-            table.loc["Mean"] = table.loc["Mean"].map(lambda value: f"**{value}**")
+            table.loc["Mean"] = table.loc["Mean"].map(
+                lambda value: f"**{value}**"
+            )
             table = table.rename(index={"Mean": "**Mean**"})
             table = table.rename_axis("Test").reset_index()
             tables.append(f"### {metric}\n\n{table.to_markdown(index=False)}")
@@ -140,7 +152,9 @@ def write_svg(data, path, dark_mode=False):
     data = data.assign(
         _position=[
             positions[variant]
-            for variant in zip(data["Version"], data["GHC RTS"], data["Extra config"])
+            for variant in zip(
+                data["Version"], data["GHC RTS"], data["Extra config"]
+            )
         ]
     )
     data = data.sort_values(["_position", "VUs"])
