@@ -148,7 +148,7 @@ def write_svg(data, path, dark_mode=False):
     script = data["K6 script"].iloc[0]
     duration = math.floor(data["Duration"].iloc[0] / 1000)
     figure.suptitle(
-        f"K6 script: {script} | " f"Duration: {duration}s",
+        f"K6 script: {script} | Duration: {duration}s",
         parse_math=False,
     )
     for axis, metric in zip(axes, METRICS):
