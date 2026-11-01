@@ -96,7 +96,7 @@ $ postgrest-bench-info
 K6 runs on the client instance, but you can get the output of the load test on your machine:
 
 ```
-## k6 will run with 10 VUs on the AWS client instance and load test the t3anano instance with the local k6/GETSingle.js script
+## k6 will run with 20 VUs on the AWS client instance and load test the t3a.nano instance for 10 seconds with the local k6/GETSingle.js script
 $ postgrest-bench-k6 20 10s k6/GETSingle.js
 
 Multiple scripts can be supplied; each script runs sequentially for the specified duration:
@@ -125,13 +125,13 @@ The `GETSingle.sql` runs an equivalent SQL statement to what PostgREST generates
 
 There are scripts that help with varying the environment while load testing. You can use these to get a report once the command finishes running:
 
-Run k6 with a different qty of VUs:
+Run k6 with a different number of VUs:
 
 ```
 $ postgrest-bench-k6-vary k6/GETSingle.js
 ```
 
-Run k6 with varied vus and with varied ec2 instances for the client and pgrst instances (this will involve reprovisioning/redeploying the client and pgrst instance, it will take a while):
+Run k6 with varied VUs and with varied ec2 instances for the client and pgrst instances (this will involve reprovisioning/redeploying the client and pgrst instances, it will take a while):
 
 ```
 $ postgrest-bench-vary-instances postgrest-bench-k6-vary k6/GETSingle.js > K6_GET_SINGLE.txt
@@ -234,12 +234,12 @@ You can generate reports from a JSONL file, for this use:
 postgrest-bench-generate-report share/rts.jsonl
 ```
 
-This generates SVG reports per each k6 script ran, a summarized markdown comparing each configuration and a markdown with full details of the report.
+This generates SVG reports for each k6 script run, a summarized markdown comparing each configuration and a markdown with full details of the report.
 
 ## Limitations
 
 - The instances tested for this benchmark are the `t3a` series and the `m5a` series.
-  ARM-based instances, haven't been tested.
+  ARM-based instances haven't been tested.
 
 - When the NixOS AMI goes out out of date, you can get these errors:
   ```
