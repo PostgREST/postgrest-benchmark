@@ -226,6 +226,15 @@ postgrest-bench-pgrst-vs ./bin/pipeline-pgrst \
 postgrest-bench-k6-vary-vus 1m k6/* \
 > results/comparison.jsonl
 ```
+## Reports
+
+You can generate reports from a JSONL file, for this use:
+
+```bash
+postgrest-bench-generate-report share/rts.jsonl
+```
+
+This generates SVG reports per each k6 script ran, a summarized markdown comparing each configuration and a markdown with full details of the report.
 
 ## Limitations
 
