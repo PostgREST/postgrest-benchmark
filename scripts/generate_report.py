@@ -8,7 +8,6 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import pandas as pd
 
-
 VARIANT_COLUMNS = ["Version", "GHC RTS", "Extra config"]
 SERIES_COLUMNS = ["VUs", "EC2", "Separate PG"]
 LATENCY_METRICS = ["p50", "p90", "p95"]
@@ -22,9 +21,7 @@ def version_key(version):
 
 def get_variants(data):
     return sorted(
-        data[VARIANT_COLUMNS].drop_duplicates().itertuples(
-            index=False, name=None
-        ),
+        data[VARIANT_COLUMNS].drop_duplicates().itertuples(index=False, name=None),
         key=lambda variant: (
             version_key(variant[0]),
             tuple(map(int, re.findall(r"\d+", variant[1]))),
@@ -49,25 +46,23 @@ def read_results(path):
             metrics = record["metrics"]
             duration = metrics["http_req_duration"]["values"]
             failed = metrics.get("http_req_failed", {}).get("values", {})
-            rows.append({
-                "Version": Path(version).name if version else version,
-                "K6 script": record.get("K6_SCRIPT"),
-                "EC2": record.get("PGRSTBENCH_EC2_PGRST_INSTANCE_TYPE"),
-                "Separate PG": record["PGRSTBENCH_SEPARATE_PG"],
-                "GHC RTS": record.get("PGRSTBENCH_GHC_RTS") or "",
-                "Extra config": (
-                    record.get("PGRSTBENCH_PGRST_EXTRA_CONFIG") or ""
-                ),
-                "VUs": int(
-                    metrics.get("vus_max", metrics["vus"])["values"]["max"]
-                ),
-                "http_reqs (req/s)": metrics["http_reqs"]["values"]["rate"],
-                "failed requests": failed.get("passes", 0),
-                "p50": duration["med"],
-                "p90": duration["p(90)"],
-                "p95": duration["p(95)"],
-                "Duration": record["state"]["testRunDurationMs"],
-            })
+            rows.append(
+                {
+                    "Version": Path(version).name if version else version,
+                    "K6 script": record.get("K6_SCRIPT"),
+                    "EC2": record.get("PGRSTBENCH_EC2_PGRST_INSTANCE_TYPE"),
+                    "Separate PG": record["PGRSTBENCH_SEPARATE_PG"],
+                    "GHC RTS": record.get("PGRSTBENCH_GHC_RTS") or "",
+                    "Extra config": (record.get("PGRSTBENCH_PGRST_EXTRA_CONFIG") or ""),
+                    "VUs": int(metrics.get("vus_max", metrics["vus"])["values"]["max"]),
+                    "http_reqs (req/s)": metrics["http_reqs"]["values"]["rate"],
+                    "failed requests": failed.get("passes", 0),
+                    "p50": duration["med"],
+                    "p90": duration["p(90)"],
+                    "p95": duration["p(95)"],
+                    "Duration": record["state"]["testRunDurationMs"],
+                }
+            )
     return pd.DataFrame(rows)
 
 
@@ -79,9 +74,7 @@ def write_markdown(data, path):
     table["Duration"] = table["Duration"].map(lambda value: f"{value}ms")
     for column in LATENCY_METRICS:
         table[column] = table[column].map(lambda value: f"{value:.2f}ms")
-    path.write_text(
-        table.to_markdown(index=False)
-    )
+    path.write_text(table.to_markdown(index=False))
 
 
 def percentage_change(baseline, candidate):
@@ -104,9 +97,9 @@ def write_vs_markdown(data, path):
         summary = []
         for metric in METRICS:
             values = averages[metric].unstack(VARIANT_COLUMNS)
-            values = values.reindex(columns=pd.MultiIndex.from_tuples(
-                variants, names=VARIANT_COLUMNS
-            ))
+            values = values.reindex(
+                columns=pd.MultiIndex.from_tuples(variants, names=VARIANT_COLUMNS)
+            )
             changes = percentage_change(values[baseline], values[candidate])
             table = changes.unstack(SERIES_COLUMNS).sort_index(
                 axis=1, ascending=[True, True, False]
@@ -117,25 +110,24 @@ def write_vs_markdown(data, path):
             ]
             table.index = [Path(str(script)).name for script in table.index]
             table.loc["Mean"] = table.mean()
-            table = table.apply(lambda column: column.map(
-                lambda gain: "N/A" if pd.isna(gain) else f"{gain:+.1f}%"
-            ))
+            table = table.apply(
+                lambda column: column.map(
+                    lambda gain: "N/A" if pd.isna(gain) else f"{gain:+.1f}%"
+                )
+            )
             if metric in summary_metrics:
                 summary.append(table.loc["Mean"].rename(metric))
-            table.loc["Mean"] = table.loc["Mean"].map(
-                lambda value: f"**{value}**"
-            )
+            table.loc["Mean"] = table.loc["Mean"].map(lambda value: f"**{value}**")
             table = table.rename(index={"Mean": "**Mean**"})
             table = table.rename_axis("Test").reset_index()
-            tables.append(
-                f"### {metric}\n\n{table.to_markdown(index=False)}"
-            )
+            tables.append(f"### {metric}\n\n{table.to_markdown(index=False)}")
         comparisons.append(
             f"## `{variant_label(baseline)}` vs "
             f"`{variant_label(candidate)}`\n\n"
             + "### Summary\n\n"
             + pd.DataFrame(summary).rename_axis("Mean change").to_markdown()
-            + "\n\n" + "\n\n".join(tables)
+            + "\n\n"
+            + "\n\n".join(tables)
         )
     path.write_text("\n\n".join(comparisons))
     return True
@@ -146,17 +138,17 @@ def write_svg(data, path, dark_mode=False):
     variants = get_variants(data)
     positions = {variant: index for index, variant in enumerate(variants)}
     data = data.assign(
-        _position=[positions[variant] for variant in zip(
-            data["Version"], data["GHC RTS"], data["Extra config"]
-        )]
+        _position=[
+            positions[variant]
+            for variant in zip(data["Version"], data["GHC RTS"], data["Extra config"])
+        ]
     )
     data = data.sort_values(["_position", "VUs"])
     figure, axes = plt.subplots(len(METRICS), 1, figsize=(18, 18), sharex=True)
     script = data["K6 script"].iloc[0]
     duration = math.floor(data["Duration"].iloc[0] / 1000)
     figure.suptitle(
-        f"K6 script: {script} | "
-        f"Duration: {duration}s",
+        f"K6 script: {script} | " f"Duration: {duration}s",
         parse_math=False,
     )
     for axis, metric in zip(axes, METRICS):
@@ -172,9 +164,7 @@ def write_svg(data, path, dark_mode=False):
                 group[metric],
                 marker=marker,
                 linestyle=linestyle,
-                label=(
-                    f"{vus} VUs | {instance} | separate PG: {separate_pg}"
-                ),
+                label=(f"{vus} VUs | {instance} | separate PG: {separate_pg}"),
             )
         if metric in LATENCY_METRICS:
             axis.yaxis.set_inverted(True)
@@ -202,7 +192,8 @@ def main():
     )
     parser.add_argument("input", type=Path, help="Input JSONL file")
     parser.add_argument(
-        "--dark-mode", action="store_true",
+        "--dark-mode",
+        action="store_true",
         help="Generate SVG charts with a dark background",
     )
     args = parser.parse_args()
