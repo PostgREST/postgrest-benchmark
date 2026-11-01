@@ -176,6 +176,8 @@ def write_svg(data, path, dark_mode=False):
                     f"{vus} VUs | {instance} | separate PG: {separate_pg}"
                 ),
             )
+        if metric in LATENCY_METRICS:
+            axis.yaxis.set_inverted(True)
         axis.set_title(metric)
         # TODO some charts were showing negative labels
         if metric == "failed requests":
