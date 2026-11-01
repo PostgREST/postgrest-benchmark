@@ -141,7 +141,8 @@ def write_vs_markdown(data, path):
     return True
 
 
-def write_svg(data, path):
+def write_svg(data, path, dark_mode=False):
+    plt.style.use("dark_background" if dark_mode else "default")
     variants = get_variants(data)
     positions = {variant: index for index, variant in enumerate(variants)}
     data = data.assign(
@@ -179,7 +180,7 @@ def write_svg(data, path):
         # TODO some charts were showing negative labels
         if metric == "failed requests":
             axis.set_ylim(bottom=0)
-        axis.grid(axis="y", color="lightgray")
+        axis.grid(axis="y", alpha=0.25)
         axis.legend(loc="best")
     axes[-1].set_xticks(
         range(len(variants)),
@@ -198,6 +199,10 @@ def main():
         description="Generate reports from k6 JSONL summaries"
     )
     parser.add_argument("input", type=Path, help="Input JSONL file")
+    parser.add_argument(
+        "--dark-mode", action="store_true",
+        help="Generate SVG charts with a dark background",
+    )
     args = parser.parse_args()
     data = read_results(args.input)
     if data.empty:
@@ -207,7 +212,7 @@ def main():
     for script, script_data in data.groupby("K6 script", dropna=False):
         script_stem = Path(str(script)).stem
         svg_path = results_dir / f"{script_stem}.svg"
-        write_svg(script_data, svg_path)
+        write_svg(script_data, svg_path, dark_mode=args.dark_mode)
         print(f"Generated report: {svg_path}")
     write_markdown(data, markdown_path)
     print(f"Generated report: {markdown_path}")
