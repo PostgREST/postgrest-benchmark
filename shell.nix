@@ -4,11 +4,15 @@ let
     url = "https://github.com/NixOS/nixpkgs/archive/refs/tags/24.05.tar.gz";
     sha256 = "sha256:1lr1h35prqkd1mkmzriwlpvxcb34kmhc9dnr48gkm8hh089hifmx";
   };
-  pkgs = import nixpkgs {};
-  python = pkgs.python3.withPackages (ps: [ ps.pandas ps.matplotlib ps.tabulate ]);
+  pkgs = import nixpkgs { };
+  python = pkgs.python3.withPackages (ps: [
+    ps.pandas
+    ps.matplotlib
+    ps.tabulate
+  ]);
   global = import ./global.nix;
   prefix = global.prefix;
-  postgrest = pkgs.callPackage ./postgrest/postgrest.nix {};
+  postgrest = pkgs.callPackage ./postgrest/postgrest.nix { };
   postgrestVersions = pkgs.lib.sort pkgs.lib.versionOlder (builtins.attrNames postgrest.versions);
   defaultGhcRts = ''
     case "$PGRSTBENCH_EC2_PGRST_INSTANCE_TYPE" in
@@ -16,29 +20,25 @@ let
       *) export PGRSTBENCH_GHC_RTS="-A64m" ;;
     esac
   '';
-  deploy =
-    pkgs.writeShellScriptBin (prefix + "-deploy")
-      ''
-        set -euo pipefail
+  deploy = pkgs.writeShellScriptBin (prefix + "-deploy") ''
+    set -euo pipefail
 
-        set +e && nixops info -d ${prefix} > /dev/null 2> /dev/null
-        info=$? && set -e
+    set +e && nixops info -d ${prefix} > /dev/null 2> /dev/null
+    info=$? && set -e
 
-        if test $info -eq 1
-        then
-          echo "Creating deployment..." >&2
-          nixops create -d ${prefix} >&2
-        fi
+    if test $info -eq 1
+    then
+      echo "Creating deployment..." >&2
+      nixops create -d ${prefix} >&2
+    fi
 
-        nixops deploy -k -d ${prefix} --allow-reboot --confirm
-      '';
-  info =
-    pkgs.writeShellScriptBin (prefix + "-info")
-      ''
-        set -euo pipefail
+    nixops deploy -k -d ${prefix} --allow-reboot --confirm
+  '';
+  info = pkgs.writeShellScriptBin (prefix + "-info") ''
+    set -euo pipefail
 
-        nixops info -d ${prefix}
-      '';
+    nixops info -d ${prefix}
+  '';
   k6 =
     pkgs.writeShellScriptBin (prefix + "-k6")
 
@@ -72,167 +72,147 @@ let
           { cat k6/private/utils.js; cat "$script"; } | nixops ssh -d ${prefix} client "$remote_command"
         done
       '';
-  k6VariedVus =
-    pkgs.writeShellScriptBin (prefix + "-k6-vary-vus")
-      ''
-        set -euo pipefail
+  k6VariedVus = pkgs.writeShellScriptBin (prefix + "-k6-vary-vus") ''
+    set -euo pipefail
 
-        for i in '10' '50' '100'; do
-          ${prefix}-k6 "$i" "$@"
-        done
-      '';
-  clientPgBench =
-    pkgs.writeShellScriptBin (prefix + "-pgbench")
-      ''
-        set -euo pipefail
+    for i in '10' '50' '100'; do
+      ${prefix}-k6 "$i" "$@"
+    done
+  '';
+  clientPgBench = pkgs.writeShellScriptBin (prefix + "-pgbench") ''
+    set -euo pipefail
 
-        # || true is added because the command might fail on lower instances with FATAL: sorry, too many clients already
-        nixops ssh -d ${prefix} client pgbench-tuned -f - < $1 || true
-      '';
-  pgbenchK6Varied =
-    pkgs.writeShellScriptBin (prefix + "-pgbench-k6-vary")
-      ''
-        set -euo pipefail
+    # || true is added because the command might fail on lower instances with FATAL: sorry, too many clients already
+    nixops ssh -d ${prefix} client pgbench-tuned -f - < $1 || true
+  '';
+  pgbenchK6Varied = pkgs.writeShellScriptBin (prefix + "-pgbench-k6-vary") ''
+    set -euo pipefail
 
-        ${prefix}-pgbench $1
-        ${prefix}-k6-vary-vus $2
-      '';
+    ${prefix}-pgbench $1
+    ${prefix}-k6-vary-vus $2
+  '';
 
   # all of the instances have only 2 cores, they only vary their memory from 0.5G, 1G, 2G to 8G
-  executeVaryInstances =
-    pkgs.writeShellScriptBin (prefix + "-vary-instances")
-      ''
-        set -euo pipefail
+  executeVaryInstances = pkgs.writeShellScriptBin (prefix + "-vary-instances") ''
+    set -euo pipefail
 
-        for instance in 't3a.nano' 't3a.micro' 't3a.small' 't3a.medium' 't3a.large'; do
-          export PGRSTBENCH_EC2_PGRST_INSTANCE_TYPE="$instance"
-          ${defaultGhcRts}
+    for instance in 't3a.nano' 't3a.micro' 't3a.small' 't3a.medium' 't3a.large'; do
+      export PGRSTBENCH_EC2_PGRST_INSTANCE_TYPE="$instance"
+      ${defaultGhcRts}
 
-          echo -e "\nUsing a $instance EC2 type for pgrst\n" >&2
+      echo -e "\nUsing a $instance EC2 type for pgrst\n" >&2
 
-          ${prefix}-deploy
+      ${prefix}-deploy
 
-          sleep 2s # TODO: sleep until pgrest establishes a connection to pg, this should be handled in a k6 setup
-          $@
-        done
-      '';
+      sleep 2s # TODO: sleep until pgrest establishes a connection to pg, this should be handled in a k6 setup
+      $@
+    done
+  '';
 
   # the instances double their cores and memory, from 4/16G to 48/192G
-  executeVaryHighInstances =
-    pkgs.writeShellScriptBin (prefix + "-vary-high-instances")
-      ''
-        set -euo pipefail
+  executeVaryHighInstances = pkgs.writeShellScriptBin (prefix + "-vary-high-instances") ''
+    set -euo pipefail
 
-        for instance in 't3a.xlarge' 't3a.2xlarge' 'm5a.4xlarge' 'm5a.8xlarge' 'm5a.12xlarge'; do
-          export PGRSTBENCH_EC2_PGRST_INSTANCE_TYPE="$instance"
-          ${defaultGhcRts}
+    for instance in 't3a.xlarge' 't3a.2xlarge' 'm5a.4xlarge' 'm5a.8xlarge' 'm5a.12xlarge'; do
+      export PGRSTBENCH_EC2_PGRST_INSTANCE_TYPE="$instance"
+      ${defaultGhcRts}
 
-          echo -e "\nUsing a $instance EC2 type for pgrst\n" >&2
+      echo -e "\nUsing a $instance EC2 type for pgrst\n" >&2
 
-          ${prefix}-deploy
+      ${prefix}-deploy
 
-          sleep 2s # TODO: sleep until pgrest establishes a connection to pg, this should be handled in a k6 setup
-          $@
-        done
-      '';
+      sleep 2s # TODO: sleep until pgrest establishes a connection to pg, this should be handled in a k6 setup
+      $@
+    done
+  '';
 
   # https://ghc.gitlab.haskell.org/ghc/doc/users_guide/runtime_control.html#rts-flag-n-size
   # -n becomes 4m when -A is 16m or larger, so leave `-n` alone.
   # Docs for -N params https://ghc.gitlab.haskell.org/ghc/doc/users_guide/using-concurrent.html#rts-options-for-smp-parallelism
-  executeVaryRTS =
-    pkgs.writeShellScriptBin (prefix + "-vary-rts")
-      ''
-        set -euo pipefail
+  executeVaryRTS = pkgs.writeShellScriptBin (prefix + "-vary-rts") ''
+    set -euo pipefail
 
-        for rts in \
-          '-N4 -A64m' \
-          '-N8 -A64m' \
-          '-N16 -A64m' \
-          '-N32 -A64m'; do
-          export PGRSTBENCH_GHC_RTS="$rts"
-          echo -e "\nUsing RTS settings: $rts for pgrst\n" >&2
+    for rts in \
+      '-N4 -A64m' \
+      '-N8 -A64m' \
+      '-N16 -A64m' \
+      '-N32 -A64m'; do
+      export PGRSTBENCH_GHC_RTS="$rts"
+      echo -e "\nUsing RTS settings: $rts for pgrst\n" >&2
 
-          ${prefix}-deploy
+      ${prefix}-deploy
 
-          sleep 2s # TODO: sleep until pgrest establishes a connection to pg, this should be handled in a k6 setup
-          $@
-        done
-      '';
+      sleep 2s # TODO: sleep until pgrest establishes a connection to pg, this should be handled in a k6 setup
+      $@
+    done
+  '';
 
-  executeVaryPostgrestVersions =
-    pkgs.writeShellScriptBin (prefix + "-vary-pgrst")
-      ''
-        set -euo pipefail
+  executeVaryPostgrestVersions = pkgs.writeShellScriptBin (prefix + "-vary-pgrst") ''
+    set -euo pipefail
 
-        for version in ${pkgs.lib.concatStringsSep " " (map pkgs.lib.escapeShellArg postgrestVersions)}; do
-          export PGRSTBENCH_PGRST_VER="$version"
-          echo -e "\nUsing PostgREST $version\n" >&2
+    for version in ${pkgs.lib.concatStringsSep " " (map pkgs.lib.escapeShellArg postgrestVersions)}; do
+      export PGRSTBENCH_PGRST_VER="$version"
+      echo -e "\nUsing PostgREST $version\n" >&2
 
-          ${prefix}-deploy >&2
+      ${prefix}-deploy >&2
 
-          sleep 2s # TODO: sleep until postgREST establishes a connection to pg
-          "$@"
-        done
-      '';
+      sleep 2s # TODO: sleep until postgREST establishes a connection to pg
+      "$@"
+    done
+  '';
 
-  executePostgrestVs =
-    pkgs.writeShellScriptBin (prefix + "-pgrst-vs")
-      ''
-        set -euo pipefail
+  executePostgrestVs = pkgs.writeShellScriptBin (prefix + "-pgrst-vs") ''
+    set -euo pipefail
 
-        binary=$(${pkgs.coreutils}/bin/realpath -e -- "$1")
-        shift
+    binary=$(${pkgs.coreutils}/bin/realpath -e -- "$1")
+    shift
 
-        echo -e "\nBenchmarking current PostgREST: ''${PGRSTBENCH_PGRST_VER:-default}\n" >&2
-        ${prefix}-deploy >&2
-        sleep 2s # TODO: sleep until PostgREST establishes a connection to pg
-        "$@"
+    echo -e "\nBenchmarking current PostgREST: ''${PGRSTBENCH_PGRST_VER:-default}\n" >&2
+    ${prefix}-deploy >&2
+    sleep 2s # TODO: sleep until PostgREST establishes a connection to pg
+    "$@"
 
-        export PGRSTBENCH_PGRST_VER="$binary"
-        echo -e "\nBenchmarking new PostgREST: $binary\n" >&2
-        ${prefix}-deploy >&2
-        sleep 2s # TODO: sleep until PostgREST establishes a connection to pg
-        "$@"
-      '';
+    export PGRSTBENCH_PGRST_VER="$binary"
+    echo -e "\nBenchmarking new PostgREST: $binary\n" >&2
+    ${prefix}-deploy >&2
+    sleep 2s # TODO: sleep until PostgREST establishes a connection to pg
+    "$@"
+  '';
 
-  ssh =
-    pkgs.writeShellScriptBin (prefix + "-ssh")
-      ''
-        set -euo pipefail
+  ssh = pkgs.writeShellScriptBin (prefix + "-ssh") ''
+    set -euo pipefail
 
-        nixops ssh -d ${prefix} $1
-      '';
-  destroy =
-    pkgs.writeShellScriptBin (prefix + "-destroy")
-      ''
-        set -euo pipefail
+    nixops ssh -d ${prefix} $1
+  '';
+  destroy = pkgs.writeShellScriptBin (prefix + "-destroy") ''
+    set -euo pipefail
 
-        nixops destroy -d ${prefix} --confirm
+    nixops destroy -d ${prefix} --confirm
 
-        nixops delete -d ${prefix}
+    nixops delete -d ${prefix}
 
-        rm -rf .deployment.nixops*
-      '';
-  generateNixOSAMIFile =
-    pkgs.writeShellScriptBin (prefix + "-generate-ami")
-      ''
-        set -euo pipefail
+    rm -rf .deployment.nixops*
+  '';
+  generateNixOSAMIFile = pkgs.writeShellScriptBin (prefix + "-generate-ami") ''
+    set -euo pipefail
 
-        # query taken from https://nixos.github.io/amis/
-        ${pkgs.awscli}/bin/aws ec2 describe-images --owners 427812963091 \
-          --region us-east-2 \
-          --filter 'Name=name,Values=nixos/25.11*' 'Name=architecture,Values=x86_64' \
-          --query 'sort_by(Images, &CreationDate)[0].ImageId' --output text  \
-        | ${pkgs.coreutils}/bin/tr -d '\n' \
-        > ${global.nixosAMIFile}
+    # query taken from https://nixos.github.io/amis/
+    ${pkgs.awscli}/bin/aws ec2 describe-images --owners 427812963091 \
+      --region us-east-2 \
+      --filter 'Name=name,Values=nixos/25.11*' 'Name=architecture,Values=x86_64' \
+      --query 'sort_by(Images, &CreationDate)[0].ImageId' --output text  \
+    | ${pkgs.coreutils}/bin/tr -d '\n' \
+    > ${global.nixosAMIFile}
 
-        echo "Wrote result to ${global.nixosAMIFile}" >&2
-      '';
-  generateReport =
-    pkgs.writers.writePython3Bin (prefix + "-generate-report") {
-      libraries = with pkgs.python3Packages; [ matplotlib pandas tabulate ];
-    }
-    (builtins.readFile ./scripts/generate_report.py);
+    echo "Wrote result to ${global.nixosAMIFile}" >&2
+  '';
+  generateReport = pkgs.writers.writePython3Bin (prefix + "-generate-report") {
+    libraries = with pkgs.python3Packages; [
+      matplotlib
+      pandas
+      tabulate
+    ];
+  } (builtins.readFile ./scripts/generate_report.py);
 
 in
 pkgs.mkShell {

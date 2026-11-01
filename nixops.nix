@@ -1,5 +1,5 @@
 let
-  pkgs = import <nixpkgs> {};
+  pkgs = import <nixpkgs> { };
   sampleDb = ./sql/chinook.sql;
   global = (import ./global.nix);
   prefix = global.prefix;
@@ -11,53 +11,59 @@ let
   pgPackage = pkgs.postgresql_14;
   tuning = import ./tuning.nix;
   env = {
-    withNginx             = builtins.getEnv "PGRSTBENCH_WITH_NGINX" == "true";
-    withMaxFds            = builtins.getEnv "PGRSTBENCH_MAX_FDS" == "true";
-    withUnixSocket        = builtins.getEnv "PGRSTBENCH_WITH_UNIX_SOCKET" == "true";
-    withSeparatePg        = builtins.getEnv "PGRSTBENCH_SEPARATE_PG" == "true";
-    ghcRts                = builtins.getEnv "PGRSTBENCH_GHC_RTS";
-    pgrstExtraConfig      = builtins.getEnv "PGRSTBENCH_PGRST_EXTRA_CONFIG";
-    ec2PgrstInstanceType  = builtins.getEnv "PGRSTBENCH_EC2_PGRST_INSTANCE_TYPE";
+    withNginx = builtins.getEnv "PGRSTBENCH_WITH_NGINX" == "true";
+    withMaxFds = builtins.getEnv "PGRSTBENCH_MAX_FDS" == "true";
+    withUnixSocket = builtins.getEnv "PGRSTBENCH_WITH_UNIX_SOCKET" == "true";
+    withSeparatePg = builtins.getEnv "PGRSTBENCH_SEPARATE_PG" == "true";
+    ghcRts = builtins.getEnv "PGRSTBENCH_GHC_RTS";
+    pgrstExtraConfig = builtins.getEnv "PGRSTBENCH_PGRST_EXTRA_CONFIG";
+    ec2PgrstInstanceType = builtins.getEnv "PGRSTBENCH_EC2_PGRST_INSTANCE_TYPE";
     ec2ClientInstanceType = builtins.getEnv "PGRSTBENCH_EC2_CLIENT_INSTANCE_TYPE";
-    ec2DbInstanceType     = builtins.getEnv "PGRSTBENCH_EC2_DB_INSTANCE_TYPE";
+    ec2DbInstanceType = builtins.getEnv "PGRSTBENCH_EC2_DB_INSTANCE_TYPE";
     postgrestBin =
-      let configuredValue = builtins.getEnv "PGRSTBENCH_PGRST_VER";
+      let
+        configuredValue = builtins.getEnv "PGRSTBENCH_PGRST_VER";
       in
-        if configuredValue == "" || builtins.match "v[0-9]+\\.[0-9]+(\\.[0-9]+)?" configuredValue != null
-        then ""
-        else /. + configuredValue;
+      if
+        configuredValue == "" || builtins.match "v[0-9]+\\.[0-9]+(\\.[0-9]+)?" configuredValue != null
+      then
+        ""
+      else
+        /. + configuredValue;
     postgrestVer =
-      let configuredValue = builtins.getEnv "PGRSTBENCH_PGRST_VER";
+      let
+        configuredValue = builtins.getEnv "PGRSTBENCH_PGRST_VER";
       in
-        if builtins.match "v[0-9]+\\.[0-9]+(\\.[0-9]+)?" configuredValue != null
-        then configuredValue
-        else "";
-    pgrstJWTCacheEnabled  = builtins.getEnv "PGRSTBENCH_JWT_CACHE_ENABLED" == "true";
-    withPgLogging     =
-      pkgs.lib.optionalAttrs (builtins.getEnv "PGRSTBENCH_PG_LOGGING" == "true") {
-        logging_collector = "on";
-        log_directory = "pg_log";
-        log_filename = "postgresql-%Y-%m-%d.log";
-        log_statement = "all";
-      };
+      if builtins.match "v[0-9]+\\.[0-9]+(\\.[0-9]+)?" configuredValue != null then
+        configuredValue
+      else
+        "";
+    pgrstJWTCacheEnabled = builtins.getEnv "PGRSTBENCH_JWT_CACHE_ENABLED" == "true";
+    withPgLogging = pkgs.lib.optionalAttrs (builtins.getEnv "PGRSTBENCH_PG_LOGGING" == "true") {
+      logging_collector = "on";
+      log_directory = "pg_log";
+      log_filename = "postgresql-%Y-%m-%d.log";
+      log_statement = "all";
+    };
   };
   pgService = settings: cidrBlock: {
-      enable = true;
-      package = pgPackage;
-      authentication = ''
-        local   all all trust
-        host    all all 127.0.0.1/32 trust
-        host    all all ::1/128 trust
-        host    all all ${cidrBlock} trust
-      '';
-      enableTCPIP = true; # listen_adresses = *
-      settings = settings // env.withPgLogging;
-      initialScript = sampleDb;
+    enable = true;
+    package = pgPackage;
+    authentication = ''
+      local   all all trust
+      host    all all 127.0.0.1/32 trust
+      host    all all ::1/128 trust
+      host    all all ${cidrBlock} trust
+    '';
+    enableTCPIP = true; # listen_adresses = *
+    settings = settings // env.withPgLogging;
+    initialScript = sampleDb;
   };
   postgrest = pkgs.callPackage ./postgrest/postgrest.nix {
     inherit (env) postgrestBin postgrestVer;
   };
-in {
+in
+{
   network.storage.legacy = {
     databasefile = "~/.deployments.nixops";
   };
@@ -66,7 +72,7 @@ in {
 
   # Provisioning
   resources = {
-    ec2KeyPairs.pgrstBenchKeyPair  = { inherit region accessKeyId; };
+    ec2KeyPairs.pgrstBenchKeyPair = { inherit region accessKeyId; };
     # Dedicated VPC
     vpc.pgrstBenchVpc = {
       inherit region accessKeyId;
@@ -75,7 +81,7 @@ in {
       enableDnsHostnames = true;
       cidrBlock = "10.0.0.0/24";
     };
-    vpcSubnets.pgrstBenchSubnet = {resources, ...}: {
+    vpcSubnets.pgrstBenchSubnet = { resources, ... }: {
       inherit region accessKeyId;
       name = "${prefix}-subnet";
       zone = "${region}a";
@@ -104,267 +110,310 @@ in {
       subnetId = resources.vpcSubnets.pgrstBenchSubnet;
       routeTableId = resources.vpcRouteTables.pgrstBenchRT;
     };
-    ec2SecurityGroups.pgrstBenchSecGroup = {resources, ...}: {
+    ec2SecurityGroups.pgrstBenchSecGroup = { resources, ... }: {
       inherit region accessKeyId;
-      name  = "${prefix}-sec-group";
+      name = "${prefix}-sec-group";
       vpcId = resources.vpc.pgrstBenchVpc;
       rules = [
-        { fromPort = 80;  toPort = 80;    sourceIp = "0.0.0.0/0"; }
-        { fromPort = 22;  toPort = 22;    sourceIp = "0.0.0.0/0"; }
+        {
+          fromPort = 80;
+          toPort = 80;
+          sourceIp = "0.0.0.0/0";
+        }
+        {
+          fromPort = 22;
+          toPort = 22;
+          sourceIp = "0.0.0.0/0";
+        }
         # protocol -1 allows icmp traffic in addition to tcp/udp
-        { protocol = "-1"; fromPort = 0;   toPort = 65535; sourceIp = resources.vpcSubnets.pgrstBenchSubnet.cidrBlock; } # For internal access on the VPC
+        {
+          protocol = "-1";
+          fromPort = 0;
+          toPort = 65535;
+          sourceIp = resources.vpcSubnets.pgrstBenchSubnet.cidrBlock;
+        } # For internal access on the VPC
       ];
     };
   };
 
-  pgrst = {nodes, config, resources, ...}:
-  {
-    deployment = {
-      targetEnv = "ec2";
-      ec2 = {
-        inherit region accessKeyId;
-        instanceType             =
-          if builtins.stringLength env.ec2PgrstInstanceType == 0
-          then "t3a.nano"
-          else env.ec2PgrstInstanceType;
-        associatePublicIpAddress = true;
-        ebsInitialRootDiskSize   = 10;
-        keyPair                  = resources.ec2KeyPairs.pgrstBenchKeyPair;
-        subnetId                 = resources.vpcSubnets.pgrstBenchSubnet;
-        securityGroupIds         = [resources.ec2SecurityGroups.pgrstBenchSecGroup.name];
-        ami = nixosAMI;
-      };
-    };
-    boot.loader.grub.device = pkgs.lib.mkForce "/dev/nvme0n1"; # Fix for https://github.com/NixOS/nixpkgs/issues/62824#issuecomment-516369379
-
-    environment.systemPackages = [
-      postgrest
-      pkgs.htop
-    ];
-
-    services.postgresql = pkgs.lib.mkIf (!env.withSeparatePg)
-                          (pgService
-                            tuning.${config.deployment.ec2.instanceType}.postgresql
-                            resources.vpcSubnets.pgrstBenchSubnet.cidrBlock);
-
-    systemd.services =
-    let
-      pgrstSock = "/tmp/pgrst.sock";
-    in
+  pgrst =
     {
-      postgrest =
-      let
-        pgHost =
-          if env.withSeparatePg then "pg"
-          else if env.withUnixSocket then ""
-          else "localhost";
-        pgrstConf = pkgs.writeText "pgrst.conf" ''
-          db-uri = "postgres://postgres@${pgHost}/postgres"
-          db-schema = "public"
-          db-anon-role = "postgres"
-          db-use-legacy-gucs = false
-          db-pool = ${builtins.toString tuning.${config.deployment.ec2.instanceType}.dbPool}
-          ${
-            if env.pgrstJWTCacheEnabled
-              then ""
-              else "jwt-cache-max-entries = 0"
-          }
-          admin-server-port = 3001
-          server-host = "*6"
-
-          ${
-            if env.withNginx && env.withUnixSocket
-            then ''
-              server-unix-socket = "${pgrstSock}"
-              server-unix-socket-mode = "777"
-            ''
-            else if env.withNginx
-            then ''
-              server-port = "3000"
-            ''
-            else ''
-              server-port = "80"
-            ''
-          }
-
-          jwt-secret = "reallyreallyreallyreallyverysafe"
-
-          ${env.pgrstExtraConfig}
-        '';
-      in
-      {
-        enable      = true;
-        description = "postgrest daemon";
-        after       = [ "postgresql.service" ];
-        wantedBy    = [ "multi-user.target" ];
-        serviceConfig = {
-          ExecStart = "${postgrest}/bin/postgrest ${pgrstConf} +RTS ${env.ghcRts} -RTS";
-          Restart = "always";
-        } // pkgs.lib.optionalAttrs (env.withMaxFds) {
-          LimitNOFILE = maxFileDescriptors;
+      nodes,
+      config,
+      resources,
+      ...
+    }:
+    {
+      deployment = {
+        targetEnv = "ec2";
+        ec2 = {
+          inherit region accessKeyId;
+          instanceType =
+            if builtins.stringLength env.ec2PgrstInstanceType == 0 then
+              "t3a.nano"
+            else
+              env.ec2PgrstInstanceType;
+          associatePublicIpAddress = true;
+          ebsInitialRootDiskSize = 10;
+          keyPair = resources.ec2KeyPairs.pgrstBenchKeyPair;
+          subnetId = resources.vpcSubnets.pgrstBenchSubnet;
+          securityGroupIds = [ resources.ec2SecurityGroups.pgrstBenchSecGroup.name ];
+          ami = nixosAMI;
         };
       };
-      nginx =
-      let
-        nginxConf = pkgs.writeText "nginx.conf" ''
-          daemon off;
-          worker_processes auto;
+      boot.loader.grub.device = pkgs.lib.mkForce "/dev/nvme0n1"; # Fix for https://github.com/NixOS/nixpkgs/issues/62824#issuecomment-516369379
 
-          events {
-            worker_connections 2048;
-          }
+      environment.systemPackages = [
+        postgrest
+        pkgs.htop
+      ];
 
-          http {
-            access_log off; # otherwise benchmark traffic can fill the disk
+      services.postgresql = pkgs.lib.mkIf (!env.withSeparatePg) (
+        pgService tuning.${config.deployment.ec2.instanceType}.postgresql
+          resources.vpcSubnets.pgrstBenchSubnet.cidrBlock
+      );
 
-            upstream postgrest {
-              ${
-                if env.withUnixSocket
-                then
-                ''
-                  server unix:${pgrstSock};
-                ''
-                else ''
-                  server localhost:3000;
-                ''
+      systemd.services =
+        let
+          pgrstSock = "/tmp/pgrst.sock";
+        in
+        {
+          postgrest =
+            let
+              pgHost =
+                if env.withSeparatePg then
+                  "pg"
+                else if env.withUnixSocket then
+                  ""
+                else
+                  "localhost";
+              pgrstConf = pkgs.writeText "pgrst.conf" ''
+                db-uri = "postgres://postgres@${pgHost}/postgres"
+                db-schema = "public"
+                db-anon-role = "postgres"
+                db-use-legacy-gucs = false
+                db-pool = ${builtins.toString tuning.${config.deployment.ec2.instanceType}.dbPool}
+                ${if env.pgrstJWTCacheEnabled then "" else "jwt-cache-max-entries = 0"}
+                admin-server-port = 3001
+                server-host = "*6"
 
+                ${
+                  if env.withNginx && env.withUnixSocket then
+                    ''
+                      server-unix-socket = "${pgrstSock}"
+                      server-unix-socket-mode = "777"
+                    ''
+                  else if env.withNginx then
+                    ''
+                      server-port = "3000"
+                    ''
+                  else
+                    ''
+                      server-port = "80"
+                    ''
+                }
+
+                jwt-secret = "reallyreallyreallyreallyverysafe"
+
+                ${env.pgrstExtraConfig}
+              '';
+            in
+            {
+              enable = true;
+              description = "postgrest daemon";
+              after = [ "postgresql.service" ];
+              wantedBy = [ "multi-user.target" ];
+              serviceConfig = {
+                ExecStart = "${postgrest}/bin/postgrest ${pgrstConf} +RTS ${env.ghcRts} -RTS";
+                Restart = "always";
               }
-              keepalive 64;
-              keepalive_timeout 120s;
-            }
+              // pkgs.lib.optionalAttrs (env.withMaxFds) {
+                LimitNOFILE = maxFileDescriptors;
+              };
+            };
+          nginx =
+            let
+              nginxConf = pkgs.writeText "nginx.conf" ''
+                daemon off;
+                worker_processes auto;
 
-            server {
-              listen 80 default_server;
-              listen [::]:80 default_server;
+                events {
+                  worker_connections 2048;
+                }
 
-              location / {
-                proxy_set_header  Connection "";
-                proxy_set_header  Accept-Encoding  "";
-                proxy_http_version 1.1;
-                proxy_pass http://postgrest/;
+                http {
+                  access_log off; # otherwise benchmark traffic can fill the disk
+
+                  upstream postgrest {
+                    ${
+                      if env.withUnixSocket then
+                        ''
+                          server unix:${pgrstSock};
+                        ''
+                      else
+                        ''
+                          server localhost:3000;
+                        ''
+
+                    }
+                    keepalive 64;
+                    keepalive_timeout 120s;
+                  }
+
+                  server {
+                    listen 80 default_server;
+                    listen [::]:80 default_server;
+
+                    location / {
+                      proxy_set_header  Connection "";
+                      proxy_set_header  Accept-Encoding  "";
+                      proxy_http_version 1.1;
+                      proxy_pass http://postgrest/;
+                    }
+                  }
+                }
+              '';
+              execCommand = "${pkgs.nginx}/bin/nginx -c '${nginxConf}'";
+            in
+            {
+              enable = true;
+              description = "Nginx Web Server";
+              after = [ "network.target" ];
+              wantedBy = [ "multi-user.target" ];
+              startLimitIntervalSec = 60;
+              stopIfChanged = false;
+              preStart = "${execCommand} -t";
+              serviceConfig = {
+                ExecStart = execCommand;
+                ExecReload = [
+                  "${execCommand} -t"
+                  "${pkgs.coreutils}/bin/kill -HUP $MAINPID"
+                ];
+                Restart = "always";
+                RestartSec = "10";
+                # taken from https://github.com/NixOS/nixpkgs/blob/master/nixos/modules/services/web-servers/nginx/default.nix
+                # maybe not all are necessary
+                # Runtime directory and mode
+                RuntimeDirectory = "nginx";
+                RuntimeDirectoryMode = "0750";
+                # Cache directory and mode
+                CacheDirectory = "nginx";
+                CacheDirectoryMode = "0750";
+                # Logs directory and mode
+                LogsDirectory = "nginx";
+                LogsDirectoryMode = "0750";
+                # Proc filesystem
+                ProcSubset = "pid";
+                ProtectProc = "invisible";
+                # New file permissions
+                UMask = "0027"; # 0640 / 0750
+                # Security
+                NoNewPrivileges = true;
               }
-            }
-          }
-        '';
-        execCommand = "${pkgs.nginx}/bin/nginx -c '${nginxConf}'";
-      in
-      {
-        enable      = true;
-        description = "Nginx Web Server";
-        after       = [ "network.target" ];
-        wantedBy    = [ "multi-user.target" ];
-        startLimitIntervalSec = 60;
-        stopIfChanged = false;
-        preStart = "${execCommand} -t";
-        serviceConfig = {
-          ExecStart = execCommand;
-          ExecReload = [
-            "${execCommand} -t"
-            "${pkgs.coreutils}/bin/kill -HUP $MAINPID"
-          ];
-          Restart = "always";
-          RestartSec = "10";
-          # taken from https://github.com/NixOS/nixpkgs/blob/master/nixos/modules/services/web-servers/nginx/default.nix
-          # maybe not all are necessary
-          # Runtime directory and mode
-          RuntimeDirectory = "nginx";
-          RuntimeDirectoryMode = "0750";
-          # Cache directory and mode
-          CacheDirectory = "nginx";
-          CacheDirectoryMode = "0750";
-          # Logs directory and mode
-          LogsDirectory = "nginx";
-          LogsDirectoryMode = "0750";
-          # Proc filesystem
-          ProcSubset = "pid";
-          ProtectProc = "invisible";
-          # New file permissions
-          UMask = "0027"; # 0640 / 0750
-          # Security
-          NoNewPrivileges = true;
-        } // pkgs.lib.optionalAttrs (env.withMaxFds) {
-          LimitNOFILE = maxFileDescriptors;
+              // pkgs.lib.optionalAttrs (env.withMaxFds) {
+                LimitNOFILE = maxFileDescriptors;
+              };
+            };
+        };
+
+      networking.firewall.allowedTCPPorts = [
+        80
+        5432
+      ];
+      networking.hosts = pkgs.lib.optionalAttrs env.withSeparatePg {
+        "${nodes.pg.config.networking.privateIPv4}" = [ "pg" ];
+      };
+    };
+
+  client =
+    {
+      config,
+      nodes,
+      resources,
+      ...
+    }:
+    {
+      environment.systemPackages =
+        let
+          pgbenchPoolSize = builtins.toString tuning.${config.deployment.ec2.instanceType}.dbPool;
+        in
+        [
+          (pkgs.writeShellScriptBin "pgbench-tuned" ''
+            set -euo pipefail
+
+            echo -e "\nRunning pgbench with ${pgbenchPoolSize} clients and threads"
+
+            ${pgPackage}/bin/pgbench postgres -U postgres \
+              -h ${if env.withSeparatePg then "pg" else "pgrst"} \
+              -T ${builtins.toString durationSeconds} --no-vacuum \
+              -M prepared \
+              --jobs ${pgbenchPoolSize} \
+              -c ${pgbenchPoolSize} \
+              $@
+          '')
+          pkgs.k6
+        ];
+      deployment = {
+        targetEnv = "ec2";
+        ec2 = {
+          inherit region accessKeyId;
+          instanceType =
+            if builtins.stringLength env.ec2ClientInstanceType != 0 then
+              env.ec2ClientInstanceType
+            else
+              "t3a.nano";
+          associatePublicIpAddress = true;
+          keyPair = resources.ec2KeyPairs.pgrstBenchKeyPair;
+          subnetId = resources.vpcSubnets.pgrstBenchSubnet;
+          securityGroupIds = [ resources.ec2SecurityGroups.pgrstBenchSecGroup.name ];
+          ami = nixosAMI;
         };
       };
-    };
-
-    networking.firewall.allowedTCPPorts = [ 80 5432 ];
-    networking.hosts = pkgs.lib.optionalAttrs env.withSeparatePg {
-      "${nodes.pg.config.networking.privateIPv4}" = [ "pg" ];
-    };
-  };
-
-  client = {config, nodes, resources, ...}: {
-    environment.systemPackages =
-    let
-      pgbenchPoolSize = builtins.toString tuning.${config.deployment.ec2.instanceType}.dbPool;
-    in
-    [
-      (pkgs.writeShellScriptBin "pgbench-tuned"
-      ''
-        set -euo pipefail
-
-        echo -e "\nRunning pgbench with ${pgbenchPoolSize} clients and threads"
-
-        ${pgPackage}/bin/pgbench postgres -U postgres \
-          -h ${if env.withSeparatePg then "pg" else "pgrst"} \
-          -T ${builtins.toString durationSeconds} --no-vacuum \
-          -M prepared \
-          --jobs ${pgbenchPoolSize} \
-          -c ${pgbenchPoolSize} \
-          $@
-      '')
-      pkgs.k6
-    ];
-    deployment = {
-      targetEnv = "ec2";
-      ec2 = {
-        inherit region accessKeyId;
-        instanceType             = if builtins.stringLength env.ec2ClientInstanceType != 0
-                                     then env.ec2ClientInstanceType
-                                   else
-                                     "t3a.nano";
-        associatePublicIpAddress = true;
-        keyPair                  = resources.ec2KeyPairs.pgrstBenchKeyPair;
-        subnetId                 = resources.vpcSubnets.pgrstBenchSubnet;
-        securityGroupIds         = [resources.ec2SecurityGroups.pgrstBenchSecGroup.name];
-        ami = nixosAMI;
+      boot.loader.grub.device = pkgs.lib.mkForce "/dev/nvme0n1";
+      # Tuning from https://k6.io/docs/misc/fine-tuning-os
+      boot.kernel.sysctl."net.ipv4.tcp_tw_reuse" = 1;
+      security.pam.loginLimits = [
+        # # ulimit -n
+        {
+          domain = "root";
+          type = "hard";
+          item = "nofile";
+          value = "10000";
+        }
+        {
+          domain = "root";
+          type = "soft";
+          item = "nofile";
+          value = "10000";
+        }
+      ];
+      networking.hosts = {
+        "${nodes.pgrst.config.networking.privateIPv4}" = [ "pgrst" ];
+      }
+      // pkgs.lib.optionalAttrs env.withSeparatePg {
+        "${nodes.pg.config.networking.privateIPv4}" = [ "pg" ];
       };
     };
-    boot.loader.grub.device = pkgs.lib.mkForce "/dev/nvme0n1";
-    # Tuning from https://k6.io/docs/misc/fine-tuning-os
-    boot.kernel.sysctl."net.ipv4.tcp_tw_reuse" = 1;
-    security.pam.loginLimits = [ ## ulimit -n
-      { domain = "root"; type = "hard"; item = "nofile"; value = "10000"; }
-      { domain = "root"; type = "soft"; item = "nofile"; value = "10000"; }
-    ];
-    networking.hosts = {
-      "${nodes.pgrst.config.networking.privateIPv4}" = [ "pgrst" ];
-    } // pkgs.lib.optionalAttrs env.withSeparatePg {
-      "${nodes.pg.config.networking.privateIPv4}" = [ "pg" ];
-    };
-  };
 }
-// pkgs.lib.optionalAttrs env.withSeparatePg
-{
-  pg = {resources, config, ...}: rec {
+// pkgs.lib.optionalAttrs env.withSeparatePg {
+  pg = { resources, config, ... }: rec {
     deployment = {
       targetEnv = "ec2";
       ec2 = {
         inherit region accessKeyId;
-        instanceType             = env.ec2DbInstanceType;
+        instanceType = env.ec2DbInstanceType;
         associatePublicIpAddress = true;
-        ebsInitialRootDiskSize   = 10;
-        keyPair                  = resources.ec2KeyPairs.pgrstBenchKeyPair;
-        subnetId                 = resources.vpcSubnets.pgrstBenchSubnet;
-        securityGroupIds         = [resources.ec2SecurityGroups.pgrstBenchSecGroup.name];
+        ebsInitialRootDiskSize = 10;
+        keyPair = resources.ec2KeyPairs.pgrstBenchKeyPair;
+        subnetId = resources.vpcSubnets.pgrstBenchSubnet;
+        securityGroupIds = [ resources.ec2SecurityGroups.pgrstBenchSecGroup.name ];
         ami = nixosAMI;
       };
     };
     boot.loader.grub.device = pkgs.lib.mkForce "/dev/nvme0n1"; # Fix for https://github.com/NixOS/nixpkgs/issues/62824#issuecomment-516369379
 
-    services.postgresql = pgService
-        tuning.${config.deployment.ec2.instanceType}.postgresql
+    services.postgresql =
+      pgService tuning.${config.deployment.ec2.instanceType}.postgresql
         resources.vpcSubnets.pgrstBenchSubnet.cidrBlock;
 
     networking.firewall.allowedTCPPorts = [ 5432 ];
