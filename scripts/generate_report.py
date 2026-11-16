@@ -41,6 +41,11 @@ def variant_label(variant):
     return report_label(version, rts or "default", extra_config or "default")
 
 
+def series_label(series):
+    vus, instance, separate_pg = series
+    return report_label(f"{vus} VUs", instance, f"separate PG: {separate_pg}")
+
+
 def read_results(path):
     rows = []
     with path.open() as input_file:
@@ -98,7 +103,6 @@ def write_vs_markdown(data, path):
     if len(variants) < 2:
         return False
 
-    layouts = {"true": "Separate PG", "false": "Colocated PG"}
     summary_metrics = ["http_reqs (req/s)", "p50", "p95"]
     averages = data.groupby(
         ["K6 script"] + SERIES_COLUMNS + VARIANT_COLUMNS, dropna=False
@@ -118,10 +122,7 @@ def write_vs_markdown(data, path):
             table = changes.unstack(SERIES_COLUMNS).sort_index(
                 axis=1, ascending=[True, True, False]
             )
-            table.columns = [
-                report_label(f"{vus} VUs", instance, layouts[mode])
-                for vus, instance, mode in table.columns
-            ]
+            table.columns = [series_label(series) for series in table.columns]
             table.index = [Path(str(script)).name for script in table.index]
             table.loc["Mean"] = table.mean()
             table = table.apply(
@@ -170,21 +171,15 @@ def write_svg(data, path, dark_mode=False):
         parse_math=False,
     )
     for axis, metric in zip(axes, METRICS):
-        for (vus, instance, separate_pg), group in data.groupby(
+        for series, group in data.groupby(
             SERIES_COLUMNS, sort=True, dropna=False
         ):
-            marker, linestyle = {
-                "true": ("o", "-"),
-                "false": ("s", "--"),
-            }[separate_pg]
             axis.plot(
                 group["_position"],
                 group[metric],
-                marker=marker,
-                linestyle=linestyle,
-                label=report_label(
-                    f"{vus} VUs", instance, f"separate PG: {separate_pg}"
-                ),
+                marker="o",
+                linestyle="-",
+                label=series_label(series),
             )
         if metric in LATENCY_METRICS:
             axis.yaxis.set_inverted(True)
