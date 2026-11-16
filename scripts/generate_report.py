@@ -32,9 +32,13 @@ def get_variants(data):
     )
 
 
+def report_label(*parts):
+    return " · ".join(map(str, parts))
+
+
 def variant_label(variant):
     version, rts, extra_config = variant
-    return f"{version} | {rts or 'default'} | {extra_config or 'default'}"
+    return report_label(version, rts or "default", extra_config or "default")
 
 
 def read_results(path):
@@ -115,7 +119,7 @@ def write_vs_markdown(data, path):
                 axis=1, ascending=[True, True, False]
             )
             table.columns = [
-                f"{vus} VUs · {instance} · {layouts[mode]}"
+                report_label(f"{vus} VUs", instance, layouts[mode])
                 for vus, instance, mode in table.columns
             ]
             table.index = [Path(str(script)).name for script in table.index]
@@ -162,7 +166,7 @@ def write_svg(data, path, dark_mode=False):
     script = data["K6 script"].iloc[0]
     duration = math.floor(data["Duration"].iloc[0] / 1000)
     figure.suptitle(
-        f"K6 script: {script} | Duration: {duration}s",
+        report_label(f"K6 script: {script}", f"Duration: {duration}s"),
         parse_math=False,
     )
     for axis, metric in zip(axes, METRICS):
@@ -178,7 +182,9 @@ def write_svg(data, path, dark_mode=False):
                 group[metric],
                 marker=marker,
                 linestyle=linestyle,
-                label=(f"{vus} VUs | {instance} | separate PG: {separate_pg}"),
+                label=report_label(
+                    f"{vus} VUs", instance, f"separate PG: {separate_pg}"
+                ),
             )
         if metric in LATENCY_METRICS:
             axis.yaxis.set_inverted(True)
