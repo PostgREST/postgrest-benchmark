@@ -8,15 +8,10 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import pandas as pd
 
-VARIANT_COLUMNS = ["Version", "GHC RTS", "Extra config"]
-SERIES_COLUMNS = ["VUs", "EC2", "Separate PG"]
+VARIANT_COLUMNS = ["GHC RTS", "Extra config"]
+SERIES_COLUMNS = ["Version", "VUs", "EC2", "Separate PG"]
 LATENCY_METRICS = ["p50", "p90", "p95"]
 METRICS = ["http_reqs (req/s)", "failed requests", *LATENCY_METRICS]
-
-
-def version_key(version):
-    numbers = tuple(int(part) for part in re.findall(r"\d+", version))
-    return (not version.startswith("v"), numbers)
 
 
 def get_variants(data):
@@ -25,9 +20,8 @@ def get_variants(data):
         .drop_duplicates()
         .itertuples(index=False, name=None),
         key=lambda variant: (
-            version_key(variant[0]),
-            tuple(map(int, re.findall(r"\d+", variant[1]))),
-            variant[1:],
+            tuple(map(int, re.findall(r"\d+", variant[0]))),
+            variant,
         ),
     )
 
@@ -37,13 +31,15 @@ def report_label(*parts):
 
 
 def variant_label(variant):
-    version, rts, extra_config = variant
-    return report_label(version, rts or "default", extra_config or "default")
+    rts, extra_config = variant
+    return report_label(rts or "default", extra_config or "default")
 
 
 def series_label(series):
-    vus, instance, separate_pg = series
-    return report_label(f"{vus} VUs", instance, f"separate PG: {separate_pg}")
+    version, vus, instance, separate_pg = series
+    return report_label(
+        version, f"{vus} VUs", instance, f"separate PG: {separate_pg}"
+    )
 
 
 def read_results(path):
@@ -120,7 +116,7 @@ def write_vs_markdown(data, path):
             )
             changes = percentage_change(values[baseline], values[candidate])
             table = changes.unstack(SERIES_COLUMNS).sort_index(
-                axis=1, ascending=[True, True, False]
+                axis=1, ascending=[True, True, True, False]
             )
             table.columns = [series_label(series) for series in table.columns]
             table.index = [Path(str(script)).name for script in table.index]
@@ -157,8 +153,8 @@ def write_svg(data, path, dark_mode=False):
     data = data.assign(
         _position=[
             positions[variant]
-            for variant in zip(
-                data["Version"], data["GHC RTS"], data["Extra config"]
+            for variant in data[VARIANT_COLUMNS].itertuples(
+                index=False, name=None
             )
         ]
     )
