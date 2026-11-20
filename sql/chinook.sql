@@ -23883,5 +23883,29 @@ create or replace function sleep(seconds double precision default 5) returns voi
   select pg_sleep(seconds);
 $$ language sql;
 
+-- Taken from https://github.com/PostgREST/postgrest/blob/d58ef14e48c478b058d2169550b25869737da4cb/test/spec/fixtures/schema.sql#L2053
+create or replace function custom_headers() returns void as $$
+declare
+  user_agent text := current_setting('request.headers', true)::json->>'user-agent';
+  req_path   text := current_setting('request.path', true);
+  req_accept text := current_setting('request.headers', true)::json->>'accept';
+  req_method text := current_setting('request.method', true);
+begin
+  if user_agent similar to 'MSIE (6.0|7.0)' then
+    perform set_config('response.headers',
+      '[{"Cache-Control": "no-cache, no-store, must-revalidate"}]', true);
+  elsif req_path similar to '/(items|projects)' and req_accept = 'text/csv' then
+    perform set_config('response.headers',
+      format('[{"Content-Disposition": "attachment; filename=%s.csv"}]', trim('/' from req_path)), true);
+  elsif req_path similar to '/(clients|rpc/getallprojects)' then
+    perform set_config('response.headers',
+      '[{"Content-Type": "application/custom+json"}]', true);
+  elsif req_path = '/items' and
+        req_method similar to 'POST|PATCH|PUT|DELETE' then
+    perform set_config('response.headers',
+      '[{"X-Custom-Header": "mykey=myval"}]', true);
+  end if;
+end; $$ language plpgsql;
+
 -- Ensure postgREST catches up the whole schema
 NOTIFY pgrst, 'reload schema';
