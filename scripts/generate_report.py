@@ -14,9 +14,15 @@ LATENCY_METRICS = ["p50", "p90", "p95"]
 METRICS = ["http_reqs (req/s)", "failed requests", *LATENCY_METRICS]
 
 
-def get_variants(data):
+def report_columns(version_as_variant):
+    if version_as_variant:
+        return SERIES_COLUMNS[1:], [*VARIANT_COLUMNS, "Version"]
+    return SERIES_COLUMNS, VARIANT_COLUMNS
+
+
+def get_variants(data, variant_columns):
     return sorted(
-        data[VARIANT_COLUMNS]
+        data[variant_columns]
         .drop_duplicates()
         .itertuples(index=False, name=None),
         key=lambda variant: (
@@ -31,14 +37,13 @@ def report_label(*parts):
 
 
 def variant_label(variant):
-    rts, extra_config = variant
-    return report_label(rts or "default", extra_config or "default")
+    return report_label(*(value or "default" for value in variant))
 
 
 def series_label(series):
-    version, vus, instance, separate_pg = series
+    *version, vus, instance, separate_pg = series
     return report_label(
-        version, f"{vus} VUs", instance, f"separate PG: {separate_pg}"
+        *version, f"{vus} VUs", instance, f"separate PG: {separate_pg}"
     )
 
 
@@ -94,30 +99,29 @@ def percentage_change(baseline, candidate):
     return (candidate / baseline.replace(0, float("nan")) - 1) * 100
 
 
-def write_vs_markdown(data, path):
-    variants = get_variants(data)
+def write_vs_markdown(data, path, version_as_variant=False):
+    series_columns, variant_columns = report_columns(version_as_variant)
+    variants = get_variants(data, variant_columns)
     if len(variants) < 2:
         return False
 
     summary_metrics = ["http_reqs (req/s)", "p50", "p95"]
     averages = data.groupby(
-        ["K6 script"] + SERIES_COLUMNS + VARIANT_COLUMNS, dropna=False
+        ["K6 script"] + series_columns + variant_columns, dropna=False
     )[METRICS].mean()
     comparisons = []
     for baseline, candidate in combinations(variants, 2):
         tables = []
         summary = []
         for metric in METRICS:
-            values = averages[metric].unstack(VARIANT_COLUMNS)
+            values = averages[metric].unstack(variant_columns)
             values = values.reindex(
                 columns=pd.MultiIndex.from_tuples(
-                    variants, names=VARIANT_COLUMNS
+                    variants, names=variant_columns
                 )
             )
             changes = percentage_change(values[baseline], values[candidate])
-            table = changes.unstack(SERIES_COLUMNS).sort_index(
-                axis=1, ascending=[True, True, True, False]
-            )
+            table = changes.unstack(series_columns).sort_index(axis=1)
             table.columns = [series_label(series) for series in table.columns]
             table.index = [Path(str(script)).name for script in table.index]
             table.loc["Mean"] = table.mean()
@@ -146,14 +150,15 @@ def write_vs_markdown(data, path):
     return True
 
 
-def write_svg(data, path, dark_mode=False):
+def write_svg(data, path, dark_mode=False, version_as_variant=False):
     plt.style.use("dark_background" if dark_mode else "default")
-    variants = get_variants(data)
+    series_columns, variant_columns = report_columns(version_as_variant)
+    variants = get_variants(data, variant_columns)
     positions = {variant: index for index, variant in enumerate(variants)}
     data = data.assign(
         _position=[
             positions[variant]
-            for variant in data[VARIANT_COLUMNS].itertuples(
+            for variant in data[variant_columns].itertuples(
                 index=False, name=None
             )
         ]
@@ -168,7 +173,7 @@ def write_svg(data, path, dark_mode=False):
     )
     for axis, metric in zip(axes, METRICS):
         for series, group in data.groupby(
-            SERIES_COLUMNS, sort=True, dropna=False
+            series_columns, sort=True, dropna=False
         ):
             axis.plot(
                 group["_position"],
@@ -207,6 +212,13 @@ def main():
         action="store_true",
         help="Generate SVG charts with a dark background",
     )
+    parser.add_argument(
+        "--version-as-variant",
+        action="store_true",
+        help=(
+            "Group Version as a variant for the reports"
+        ),
+    )
     args = parser.parse_args()
     data = read_results(args.input)
     if data.empty:
@@ -216,12 +228,15 @@ def main():
     for script, script_data in data.groupby("K6 script", dropna=False):
         script_stem = Path(str(script)).stem
         svg_path = results_dir / f"{script_stem}.svg"
-        write_svg(script_data, svg_path, dark_mode=args.dark_mode)
+        write_svg(
+            script_data, svg_path, dark_mode=args.dark_mode,
+            version_as_variant=args.version_as_variant,
+        )
         print(f"Generated report: {svg_path}")
     write_markdown(data, markdown_path)
     print(f"Generated report: {markdown_path}")
     vs_path = results_dir / f"{args.input.stem}-vs.md"
-    if write_vs_markdown(data, vs_path):
+    if write_vs_markdown(data, vs_path, args.version_as_variant):
         print(f"Generated report: {vs_path}")
     else:
         print(f"Skipped {vs_path}: expected at least two configurations")
