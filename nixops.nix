@@ -236,6 +236,7 @@ in
               nginxConf = pkgs.writeText "nginx.conf" ''
                 daemon off;
                 worker_processes auto;
+                error_log /dev/null;
 
                 events {
                   worker_connections 2048;
