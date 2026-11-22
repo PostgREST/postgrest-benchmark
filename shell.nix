@@ -147,6 +147,23 @@ let
     done
   '';
 
+  executeVaryConfig = pkgs.writeShellScriptBin (prefix + "-vary-config") ''
+    set -euo pipefail
+
+    for conf in \
+      'db-pipeline-mode = true' \
+      'db-pipeline-mode = true
+      db-pre-request = "custom_headers"'; do
+      export PGRSTBENCH_PGRST_EXTRA_CONFIG="$conf"
+      echo -e "\nUsing config: $conf for pgrst\n" >&2
+
+      ${prefix}-deploy
+
+      sleep 2s # TODO: sleep until pgrest establishes a connection to pg, this should be handled in a k6 setup
+      $@
+    done
+  '';
+
   executeVaryPostgrestVersions = pkgs.writeShellScriptBin (prefix + "-vary-pgrst") ''
     set -euo pipefail
 
@@ -231,6 +248,7 @@ pkgs.mkShell {
     executeVaryInstances
     executeVaryHighInstances
     executeVaryRTS
+    executeVaryConfig
     executeVaryPostgrestVersions
     executePostgrestVs
     generateNixOSAMIFile
